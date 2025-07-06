@@ -34,8 +34,8 @@
 
 <script setup>
 import { computed } from 'vue'
-import { useCircuitStore } from '../../stores/circuit'
-import ComponentPins from '../ComponentPins.vue'
+import { useCircuitStore } from '../../../stores/circuit'
+import ComponentPins from '../../ComponentPins.vue'
 
 const props = defineProps({
   id: String,

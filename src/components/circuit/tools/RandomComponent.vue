@@ -46,9 +46,9 @@
 </template>
 
 <script setup>
-import { useCircuitStore } from '../../stores/circuit'
-import ComponentPins from '../ComponentPins.vue'
-import ConfigPanel from '../ConfigPanel.vue'
+import { useCircuitStore } from '../../../stores/circuit'
+import ComponentPins from '../../ComponentPins.vue'
+import ConfigPanel from '../../ConfigPanel.vue'
 import { reactive, watch, computed } from 'vue'
 
 const props = defineProps({

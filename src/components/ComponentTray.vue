@@ -50,9 +50,9 @@ import { useCircuitStore } from '../stores/circuit'
 
 const AdderComponent = defineAsyncComponent(() => import('./circuit/AdderComponent.vue'))
 const AndComponent = defineAsyncComponent(() => import('./circuit/AndComponent.vue'))
-const ConstantComponent = defineAsyncComponent(() => import('./circuit/ConstantComponent.vue'))
-const RandomComponent = defineAsyncComponent(() => import('./circuit/RandomComponent.vue'))
-const DisplayComponent = defineAsyncComponent(() => import('./circuit/DisplayComponent.vue'))
+const ConstantComponent = defineAsyncComponent(() => import('./circuit/tools/ConstantComponent.vue'))
+const RandomComponent = defineAsyncComponent(() => import('./circuit/tools/RandomComponent.vue'))
+const DisplayComponent = defineAsyncComponent(() => import('./circuit/tools/DisplayComponent.vue'))
 const SubtractComponent = defineAsyncComponent(() => import('./circuit/SubtractComponent.vue'))
 const MultiplyComponent = defineAsyncComponent(() => import('./circuit/MultiplyComponent.vue'))
 const DivideComponent = defineAsyncComponent(() => import('./circuit/DivideComponent.vue'))
