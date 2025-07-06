@@ -659,6 +659,12 @@ export const useCircuitStore = defineStore('circuit', {
                 newValue = settings.falseOutput
               }
             }
+
+            if (newValue !== undefined && newValue !== '') {
+              newValue = String(newValue).substring(0, settings.maxOutputLength)
+            } else {
+              newValue = ''
+            }
           }
 
           if (newValue !== undefined && currentValue !== newValue) {

@@ -52,6 +52,10 @@
         <label :for="`false-output-${id}`" title="The signal sent when the input does not match (if empty, no signal is sent).">False output</label>
         <input :id="`false-output-${id}`" type="text" class="form-control" v-model="localSettings.falseOutput" @input="updateSettings">
       </div>
+      <div class="form-group">
+        <label :for="`max-output-length-${id}`" title="The maximum length of the output strings. Warning: Large values can lead to high memory usage or networking issues.">Max Output Length</label>
+        <input :id="`max-output-length-${id}`" type="number" class="form-control" v-model.number="localSettings.maxOutputLength" @input="updateSettings">
+      </div>
     </ConfigPanel>
   </Teleport>
 </template>
@@ -73,7 +77,8 @@ const props = defineProps({
     default: () => ({
       target_signal: '1',
       output: '1',
-      falseOutput: '0'
+      falseOutput: '0',
+      maxOutputLength: 200
     })
   }
 })

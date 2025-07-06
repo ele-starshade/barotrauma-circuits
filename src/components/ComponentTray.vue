@@ -119,7 +119,8 @@ const trayComponents = shallowRef([
     settings: {
       target_signal: '1',
       output: '1',
-      falseOutput: '0'
+      falseOutput: '0',
+      maxOutputLength: 200
     }
   },
   {
