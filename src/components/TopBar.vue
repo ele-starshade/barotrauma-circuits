@@ -19,7 +19,7 @@
           :checked="circuit.isComponentLimitEnabled"
           @change="circuit.toggleComponentLimit()"
         >
-        <label class="form-check-label" for="limitSwitch">Limit</label>
+        <label class="form-check-label" for="limitSwitch">Limit Components</label>
       </div>
     </div>
 
