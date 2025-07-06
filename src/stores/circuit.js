@@ -11,6 +11,7 @@ import RandomComponent from '../components/circuit/RandomComponent.vue'
 import SubtractComponent from '../components/circuit/SubtractComponent.vue'
 import DivideComponent from '../components/circuit/DivideComponent.vue'
 import XorComponent from '../components/circuit/XorComponent.vue'
+import SignalCheckComponent from '../components/circuit/SignalCheckComponent.vue'
 
 const componentMap = {
   Adder: AdderComponent,
@@ -21,7 +22,8 @@ const componentMap = {
   Random: RandomComponent,
   Subtract: SubtractComponent,
   Divide: DivideComponent,
-  Xor: XorComponent
+  Xor: XorComponent,
+  SignalCheck: SignalCheckComponent
 }
 
 const toast = useToast()
@@ -488,7 +490,7 @@ export const useCircuitStore = defineStore('circuit', {
 
         // First, determine the output of each component based on its current inputs.
         this.boardComponents.forEach(component => {
-          const outputPin = (component.name === 'Adder' || component.name === 'And' || component.name === 'Subtract' || component.name === 'Multiply' || component.name === 'Divide' || component.name === 'Xor') ? 'SIGNAL_OUT' : 'VALUE_OUT'
+          const outputPin = (component.name === 'Adder' || component.name === 'And' || component.name === 'Subtract' || component.name === 'Multiply' || component.name === 'Divide' || component.name === 'Xor' || component.name === 'SignalCheck') ? 'SIGNAL_OUT' : 'VALUE_OUT'
           const key = `${component.id}:${outputPin}`
           const currentValue = outputValues.get(key)
           let newValue
@@ -643,6 +645,19 @@ export const useCircuitStore = defineStore('circuit', {
               newValue = String(newValue).substring(0, settings.maxOutputLength)
             } else {
               newValue = ''
+            }
+          } else if (component.name === 'SignalCheck') {
+            const { settings, inputs } = component
+            const signalIn = inputs?.SIGNAL_IN
+            const targetSignal = inputs?.SET_TARGETSIGNAL ?? settings.target_signal
+            const output = inputs?.SET_OUTPUT ?? settings.output
+
+            if (signalIn !== undefined) {
+              if (signalIn === targetSignal) {
+                newValue = output
+              } else {
+                newValue = settings.falseOutput
+              }
             }
           }
 
