@@ -121,10 +121,15 @@ export const useCircuitStore = defineStore('circuit', {
     updateGhostComponentPosition (event) {
       if (!this.ghostComponent) return
 
-      const boardRect = document.getElementById('circuit-board').getBoundingClientRect()
+      const boardEl = document.getElementById('circuit-board')
+      const boardRect = boardEl.getBoundingClientRect()
+      const style = window.getComputedStyle(boardEl)
+      const borderLeft = parseFloat(style.borderLeftWidth)
+      const borderTop = parseFloat(style.borderTopWidth)
+
       const gridSize = 20
-      const x = event.clientX - boardRect.left
-      const y = event.clientY - boardRect.top
+      const x = event.clientX - boardRect.left - borderLeft
+      const y = event.clientY - boardRect.top - borderTop
 
       this.ghostComponent.x = Math.round((x - this.ghostComponent.width / 2) / gridSize) * gridSize
       this.ghostComponent.y = Math.round((y - this.ghostComponent.height / 2) / gridSize) * gridSize
@@ -207,11 +212,18 @@ export const useCircuitStore = defineStore('circuit', {
       const component = this.boardComponents.find(c => c.id === this.movingComponentInfo.id)
       if (!component) return
 
-      const boardRect = document.getElementById('circuit-board').getBoundingClientRect()
+      const boardEl = document.getElementById('circuit-board')
+      const boardRect = boardEl.getBoundingClientRect()
+      const style = window.getComputedStyle(boardEl)
+      const borderLeft = parseFloat(style.borderLeftWidth)
+      const borderTop = parseFloat(style.borderTopWidth)
       const gridSize = 20
 
-      component.x = Math.round((event.clientX - boardRect.left - this.movingComponentInfo.offsetX) / gridSize) * gridSize
-      component.y = Math.round((event.clientY - boardRect.top - this.movingComponentInfo.offsetY) / gridSize) * gridSize
+      const mouseXOnBoard = event.clientX - boardRect.left - borderLeft
+      const mouseYOnBoard = event.clientY - boardRect.top - borderTop
+
+      component.x = Math.round((mouseXOnBoard - this.movingComponentInfo.offsetX) / gridSize) * gridSize
+      component.y = Math.round((mouseYOnBoard - this.movingComponentInfo.offsetY) / gridSize) * gridSize
 
       this.updateConnectedWires(component.id)
     },
@@ -225,13 +237,20 @@ export const useCircuitStore = defineStore('circuit', {
       const waypoint = wire.waypoints.find(wp => wp.id === waypointId)
       if (!waypoint) return
 
-      const boardRect = document.getElementById('circuit-board').getBoundingClientRect()
+      const boardEl = document.getElementById('circuit-board')
+      const boardRect = boardEl.getBoundingClientRect()
+      const style = window.getComputedStyle(boardEl)
+      const borderLeft = parseFloat(style.borderLeftWidth)
+      const borderTop = parseFloat(style.borderTopWidth)
+
+      const mousePosOnBoardX = event.clientX - boardRect.left - borderLeft
+      const mousePosOnBoardY = event.clientY - boardRect.top - borderTop
 
       this.movingWaypointInfo = {
         wireId,
         waypointId,
-        offsetX: event.clientX - boardRect.left - waypoint.x,
-        offsetY: event.clientY - boardRect.top - waypoint.y
+        offsetX: mousePosOnBoardX - waypoint.x,
+        offsetY: mousePosOnBoardY - waypoint.y
       }
       this.movingComponentInfo = null
     },
@@ -244,11 +263,18 @@ export const useCircuitStore = defineStore('circuit', {
       const waypoint = wire.waypoints.find(wp => wp.id === waypointId)
       if (!waypoint) return
 
-      const boardRect = document.getElementById('circuit-board').getBoundingClientRect()
+      const boardEl = document.getElementById('circuit-board')
+      const boardRect = boardEl.getBoundingClientRect()
+      const style = window.getComputedStyle(boardEl)
+      const borderLeft = parseFloat(style.borderLeftWidth)
+      const borderTop = parseFloat(style.borderTopWidth)
       const gridSize = 20
 
-      const newX = event.clientX - boardRect.left - offsetX
-      const newY = event.clientY - boardRect.top - offsetY
+      const mouseXOnBoard = event.clientX - boardRect.left - borderLeft
+      const mouseYOnBoard = event.clientY - boardRect.top - borderTop
+
+      const newX = mouseXOnBoard - offsetX
+      const newY = mouseYOnBoard - offsetY
 
       waypoint.x = Math.round(newX / gridSize) * gridSize
       waypoint.y = Math.round(newY / gridSize) * gridSize
@@ -278,9 +304,14 @@ export const useCircuitStore = defineStore('circuit', {
         this.wiringInfo.tempWire = { x1: startPos.x, y1: startPos.y, x2: startPos.x, y2: startPos.y }
       }
 
-      const boardRect = document.getElementById('circuit-board').getBoundingClientRect()
-      this.wiringInfo.tempWire.x2 = event.clientX - boardRect.left
-      this.wiringInfo.tempWire.y2 = event.clientY - boardRect.top
+      const boardEl = document.getElementById('circuit-board')
+      const boardRect = boardEl.getBoundingClientRect()
+      const style = window.getComputedStyle(boardEl)
+      const borderLeft = parseFloat(style.borderLeftWidth)
+      const borderTop = parseFloat(style.borderTopWidth)
+
+      this.wiringInfo.tempWire.x2 = event.clientX - boardRect.left - borderLeft
+      this.wiringInfo.tempWire.y2 = event.clientY - boardRect.top - borderTop
     },
     endWiring (endCircleEl) {
       if (!this.wiringInfo || !this.wiringInfo.tempWire) {
@@ -345,9 +376,14 @@ export const useCircuitStore = defineStore('circuit', {
       const wire = this.wires.find(w => w.id === this.selectedWireId)
       if (!wire) return
 
-      const boardRect = document.getElementById('circuit-board').getBoundingClientRect()
-      const x = event.clientX - boardRect.left
-      const y = event.clientY - boardRect.top
+      const boardEl = document.getElementById('circuit-board')
+      const boardRect = boardEl.getBoundingClientRect()
+      const style = window.getComputedStyle(boardEl)
+      const borderLeft = parseFloat(style.borderLeftWidth)
+      const borderTop = parseFloat(style.borderTopWidth)
+
+      const x = event.clientX - boardRect.left - borderLeft
+      const y = event.clientY - boardRect.top - borderTop
 
       const pathPoints = [{ x: wire.x1, y: wire.y1 }, ...wire.waypoints, { x: wire.x2, y: wire.y2 }]
 
@@ -391,9 +427,12 @@ export const useCircuitStore = defineStore('circuit', {
 
       const boardRect = boardEl.getBoundingClientRect()
       const circleRect = circleEl.getBoundingClientRect()
+      const style = window.getComputedStyle(boardEl)
+      const borderLeft = parseFloat(style.borderLeftWidth)
+      const borderTop = parseFloat(style.borderTopWidth)
 
-      const x = circleRect.left - boardRect.left + (circleRect.width / 2)
-      const y = circleRect.top - boardRect.top + (circleRect.height / 2)
+      const x = circleRect.left - boardRect.left - borderLeft + (circleRect.width / 2)
+      const y = circleRect.top - boardRect.top - borderTop + (circleRect.height / 2)
 
       return { x, y }
     },
