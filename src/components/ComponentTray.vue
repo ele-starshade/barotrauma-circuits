@@ -1,5 +1,5 @@
 <template>
-  <footer id="component-tray" class="p-3">
+  <footer id="component-tray">
     <!-- Components Section -->
     <div class="components-section">
       <h3 class="tray-header">Components</h3>
@@ -16,30 +16,30 @@
       </div>
     </div>
 
-    <!-- Right Pane: Tools and Hints -->
-    <div class="right-pane">
-      <div class="tools-section">
-        <h3 class="tray-header">Tools</h3>
-        <div class="tools-list">
-          <component
-            v-for="component in toolComponents"
-            :key="component.name"
-            :is="component.is"
-            :is-tool="component.isTool"
-            draggable="true"
-            @dragstart="onDragStart($event, component)"
-            mode="tray"
-          />
-        </div>
+    <!-- Tools Section -->
+    <div class="tools-section">
+      <h3 class="tray-header">Tools</h3>
+      <div class="tools-list">
+        <component
+          v-for="component in toolComponents"
+          :key="component.name"
+          :is="component.is"
+          :is-tool="component.isTool"
+          draggable="true"
+          @dragstart="onDragStart($event, component)"
+          mode="tray"
+        />
       </div>
-      <div class="hints-section">
-          <h3 class="tray-header">Hints</h3>
-          <ul class="hints-list">
-              <li><kbd>Middle Mouse</kbd> to pan the view.</li>
-              <li><kbd>Delete</kbd> to delete selected item.</li>
-              <li><kbd>Ctrl</kbd> + Click wire to add a waypoint.</li>
-          </ul>
-      </div>
+    </div>
+
+    <!-- Hints Section -->
+    <div class="hints-section">
+        <h3 class="tray-header">Hints</h3>
+        <ul class="hints-list">
+            <li><kbd>Middle Mouse</kbd> to pan the view.</li>
+            <li><kbd>Delete</kbd> to delete selected item.</li>
+            <li><kbd>Ctrl</kbd> + Click wire to add a waypoint.</li>
+        </ul>
     </div>
   </footer>
 </template>
@@ -190,7 +190,8 @@ const toolComponents = computed(() =>
 <style scoped>
 #component-tray {
   display: grid;
-  grid-template-columns: 2fr 1fr;
+  /* Proportions: 50% Components, 40% Tools, 10% Hints as requested */
+  grid-template-columns: 5.5fr 3fr 1.5fr;
   background-color: var(--background-medium);
   border-top: 2px solid var(--background-light);
   gap: 1rem;
@@ -198,38 +199,34 @@ const toolComponents = computed(() =>
   bottom: 0;
   left: 0;
   right: 0;
-  height: 175px;
-  overflow-y: hidden;
+  height: 200px;
   padding: 1rem;
+  box-sizing: border-box; /* Include padding in height calculation */
 }
 
-.components-section {
-  border-right: 1px solid;
-  padding-right: 1rem;
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.right-pane {
+.components-section,
+.tools-section,
+.hints-section {
   display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 1rem;
-  min-width: 0;
+  grid-template-rows: auto 1fr; /* Header takes its content height, list fills the rest */
+  min-width: 0; /* Prevent grid children from overflowing */
+  min-height: 0; /* Allow grid children to shrink for scrolling */
 }
 
+.components-section,
 .tools-section {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
   border-right: 1px solid var(--background-light);
   padding-right: 1rem;
 }
 
-.hints-section {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
+.components-grid,
+.tools-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 0.75rem;
+  overflow-y: auto;
+  min-height: 0; /* Crucial for enabling scroll in a grid/flex item */
+  scrollbar-gutter: stable; /* Prevents layout jank */
 }
 
 .hints-list {
@@ -238,6 +235,9 @@ const toolComponents = computed(() =>
   margin: 0;
   font-size: 0.85rem;
   color: var(--text-muted);
+  overflow-y: auto;
+  min-height: 0;
+  scrollbar-gutter: stable;
 }
 
 .hints-list li {
@@ -254,27 +254,10 @@ const toolComponents = computed(() =>
   font-weight: bold;
 }
 
-.components-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 0.75rem;
-  overflow-y: auto;
-  scrollbar-gutter: stable;
-  border-radius: 4px;
-}
-
-.tools-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 0.75rem;
-  overflow-y: auto;
-  max-height: calc(200px - 0.75rem - 4.6rem); /* Tray height minus padding/header/gaps */
-}
-
 .tray-header {
   font-size: 1rem;
   margin-bottom: 0.75rem;
-  border-bottom: 1px solid;
+  border-bottom: 1px solid var(--background-light);
   padding-bottom: 0.5rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
