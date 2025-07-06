@@ -16,19 +16,29 @@
       </div>
     </div>
 
-    <!-- Tools Section -->
-    <div class="tools-section">
-      <h3 class="tray-header">Tools</h3>
-      <div class="tools-list">
-        <component
-          v-for="component in toolComponents"
-          :key="component.name"
-          :is="component.is"
-          :is-tool="component.isTool"
-          draggable="true"
-          @dragstart="onDragStart($event, component)"
-          mode="tray"
-        />
+    <!-- Right Pane: Tools and Hints -->
+    <div class="right-pane">
+      <div class="tools-section">
+        <h3 class="tray-header">Tools</h3>
+        <div class="tools-list">
+          <component
+            v-for="component in toolComponents"
+            :key="component.name"
+            :is="component.is"
+            :is-tool="component.isTool"
+            draggable="true"
+            @dragstart="onDragStart($event, component)"
+            mode="tray"
+          />
+        </div>
+      </div>
+      <div class="hints-section">
+          <h3 class="tray-header">Hints</h3>
+          <ul class="hints-list">
+              <li><kbd>Middle Mouse</kbd> to pan the view.</li>
+              <li><kbd>Delete</kbd> to delete selected item.</li>
+              <li><kbd>Ctrl</kbd> + Click wire to add a waypoint.</li>
+          </ul>
       </div>
     </div>
   </footer>
@@ -191,10 +201,45 @@ const toolComponents = computed(() =>
   min-width: 0;
 }
 
+.right-pane {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1rem;
+  min-width: 0;
+}
+
 .tools-section {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  border-right: 1px solid var(--background-light);
+  padding-right: 1rem;
+}
+
+.hints-section {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.hints-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+.hints-list li {
+  margin-bottom: 0.5rem;
+}
+.hints-list kbd {
+  background-color: var(--background-dark);
+  border-radius: 3px;
+  border: 1px solid var(--background-darker);
+  color: var(--text-normal);
+  font-family: monospace;
+  padding: 0.2em 0.4em;
+  font-weight: bold;
 }
 
 .components-grid {
