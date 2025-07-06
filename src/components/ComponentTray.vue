@@ -123,7 +123,7 @@ const trayComponents = shallowRef([
     is: RandomComponent,
     settings: {
       min: 0,
-      max: 100,
+      max: 1,
       period: 1000
     },
     isTool: true
