@@ -59,6 +59,7 @@ const DivideComponent = defineAsyncComponent(() => import('./circuit/DivideCompo
 const XorComponent = defineAsyncComponent(() => import('./circuit/XorComponent.vue'))
 const SignalCheckComponent = defineAsyncComponent(() => import('./circuit/SignalCheckComponent.vue'))
 const GreaterComponent = defineAsyncComponent(() => import('./circuit/GreaterComponent.vue'))
+const LightComponent = defineAsyncComponent(() => import('./circuit/tools/LightComponent.vue'))
 
 const circuit = useCircuitStore()
 
@@ -164,6 +165,15 @@ const trayComponents = shallowRef([
     name: 'Display',
     is: DisplayComponent,
     value: '',
+    isTool: true
+  },
+  {
+    name: 'Light',
+    is: LightComponent,
+    settings: {
+      color: '#ffffff',
+      isOn: false
+    },
     isTool: true
   }
 ])

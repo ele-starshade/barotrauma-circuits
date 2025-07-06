@@ -13,6 +13,7 @@ import DivideComponent from '../components/circuit/DivideComponent.vue'
 import XorComponent from '../components/circuit/XorComponent.vue'
 import SignalCheckComponent from '../components/circuit/SignalCheckComponent.vue'
 import GreaterComponent from '../components/circuit/GreaterComponent.vue'
+import LightComponent from '../components/circuit/tools/LightComponent.vue'
 
 const componentMap = {
   Adder: AdderComponent,
@@ -25,7 +26,8 @@ const componentMap = {
   Divide: DivideComponent,
   Xor: XorComponent,
   SignalCheck: SignalCheckComponent,
-  Greater: GreaterComponent
+  Greater: GreaterComponent,
+  Light: LightComponent
 }
 
 const toast = useToast()
@@ -169,6 +171,12 @@ export const useCircuitStore = defineStore('circuit', {
       if (newComponent.name === 'Random') {
         newComponent.lastExecution = 0
         newComponent.currentOutput = 0
+      }
+
+      if (newComponent.name === 'Light') {
+        newComponent.isOn = newComponent.settings.isOn
+        newComponent.color = newComponent.settings.color
+        newComponent.lastToggleState = undefined
       }
 
       if (['Adder', 'Subtract', 'Multiply', 'Divide', 'And', 'Greater'].includes(newComponent.name)) {
@@ -481,6 +489,11 @@ export const useCircuitStore = defineStore('circuit', {
         if (component.name === 'Display') {
           component.value = ''
         }
+        if (component.name === 'Light') {
+          component.isOn = component.settings.isOn
+          component.color = component.settings.color
+          component.lastToggleState = undefined
+        }
       })
 
       // If the simulation is running, force an immediate recalculation.
@@ -569,8 +582,10 @@ export const useCircuitStore = defineStore('circuit', {
             const in1Timestamp = lastSignalTimestamps?.SIGNAL_IN_1
             const in2Timestamp = lastSignalTimestamps?.SIGNAL_IN_2
 
-            const in1Truthy = in1 !== undefined && in1 !== '' && in1 !== '0'
-            const in2Truthy = in2 !== undefined && in2 !== '' && in2 !== '0'
+            // eslint-disable-next-line eqeqeq
+            const in1Truthy = in1 != undefined && in1 != '' && in1 != 0
+            // eslint-disable-next-line eqeqeq
+            const in2Truthy = in2 != undefined && in2 != '' && in2 != 0
 
             let conditionMet = false
             if (in1Timestamp && in2Timestamp) {
@@ -661,8 +676,10 @@ export const useCircuitStore = defineStore('circuit', {
             const in1Timestamp = lastSignalTimestamps?.SIGNAL_IN_1
             const in2Timestamp = lastSignalTimestamps?.SIGNAL_IN_2
 
-            const in1Truthy = in1 !== undefined && in1 !== '' && in1 !== '0'
-            const in2Truthy = in2 !== undefined && in2 !== '' && in2 !== '0'
+            // eslint-disable-next-line eqeqeq
+            const in1Truthy = in1 != undefined && in1 != '' && in1 != 0
+            // eslint-disable-next-line eqeqeq
+            const in2Truthy = in2 != undefined && in2 != '' && in2 != 0
 
             let conditionMet = false
             if (in1Timestamp && in2Timestamp) {
@@ -746,6 +763,54 @@ export const useCircuitStore = defineStore('circuit', {
           }
         })
 
+        // Handle components that don't produce output but change state (e.g., Light)
+        this.boardComponents.forEach(component => {
+          if (component.name === 'Light') {
+            const { inputs } = component
+            let newIsOn = component.isOn
+            let newColor = component.color
+
+            // Handle SET_STATE
+            const setState = inputs?.SET_STATE
+            if (setState !== undefined) {
+              // eslint-disable-next-line eqeqeq
+              newIsOn = setState != 0
+            }
+
+            // Handle TOGGLE_STATE - toggle only on a new truthy signal
+            const toggleState = inputs?.TOGGLE_STATE
+            if (toggleState !== undefined && toggleState !== component.lastToggleState) {
+              // eslint-disable-next-line eqeqeq
+              if (toggleState != 0) {
+                newIsOn = !component.isOn
+              }
+            }
+            component.lastToggleState = toggleState
+
+            // Handle SET_COLOR
+            const setColor = inputs?.SET_COLOR
+            if (setColor !== undefined) {
+              const parsed = this.parseColor(setColor)
+              if (parsed) {
+                newColor = parsed
+              }
+            } else {
+              // If not overridden by a wire, use the component's own setting
+              newColor = component.settings.color
+            }
+
+            // Update component state if changed
+            if (newIsOn !== component.isOn) {
+              component.isOn = newIsOn
+              changedInLoop = true
+            }
+            if (newColor !== component.color) {
+              component.color = newColor
+              changedInLoop = true
+            }
+          }
+        })
+
         // Then, propagate all known outputs through wires to update component inputs.
         this.wires.forEach(wire => {
           const fromKey = `${wire.fromId}:${wire.fromPin}`
@@ -802,6 +867,61 @@ export const useCircuitStore = defineStore('circuit', {
           component.value = component.inputs?.SIGNAL_IN_1 ?? ''
         }
       })
+    },
+
+    parseColor (input) {
+      if (typeof input !== 'string') return null
+
+      const str = input.trim()
+
+      // Hexadecimal
+      if (str.startsWith('#')) {
+        const hex = str.substring(1)
+        if (!/^[0-9a-fA-F]+$/.test(hex)) return null
+        let r, g, b, a
+        if (hex.length === 8) { // #RRGGBBAA
+          r = parseInt(hex.substring(0, 2), 16)
+          g = parseInt(hex.substring(2, 4), 16)
+          b = parseInt(hex.substring(4, 6), 16)
+          a = (parseInt(hex.substring(6, 8), 16) / 255).toFixed(2)
+        } else if (hex.length === 6) { // #RRGGBB
+          r = parseInt(hex.substring(0, 2), 16)
+          g = parseInt(hex.substring(2, 4), 16)
+          b = parseInt(hex.substring(4, 6), 16)
+          a = 1
+        } else {
+          return null
+        }
+        return `rgba(${r}, ${g}, ${b}, ${a})`
+      }
+
+      // Decimal or Float
+      if (str.includes(',')) {
+        const parts = str.split(',').map(p => p.trim())
+        if (parts.length < 3 || parts.length > 4) return null
+
+        // Float
+        if (parts.some(p => p.includes('.'))) {
+          const [r, g, b, a = '1.0'] = parts
+          const rNum = parseFloat(r) * 255
+          const gNum = parseFloat(g) * 255
+          const bNum = parseFloat(b) * 255
+          const aNum = parseFloat(a)
+          if ([rNum, gNum, bNum, aNum].some(isNaN)) return null
+          return `rgba(${Math.round(rNum)}, ${Math.round(gNum)}, ${Math.round(bNum)}, ${aNum})`
+        }
+
+        // Decimal
+        const [r, g, b, a = '255'] = parts
+        const rNum = parseInt(r, 10)
+        const gNum = parseInt(g, 10)
+        const bNum = parseInt(b, 10)
+        const aNum = parseInt(a, 10) / 255
+        if ([rNum, gNum, bNum, aNum].some(isNaN)) return null
+        return `rgba(${rNum}, ${gNum}, ${bNum}, ${aNum.toFixed(2)})`
+      }
+
+      return null
     },
 
     // --- Import/Export Actions ---
