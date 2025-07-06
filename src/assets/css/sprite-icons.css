@@ -1,0 +1,30 @@
+.component-icon-sprite {
+  background-image: url('/icons/signalcomp.png');
+  background-repeat: no-repeat;
+  width: 30px;
+  height: 24px;
+}
+
+.icon-and {
+  background-position: -1px -4px;
+}
+
+.icon-adder {
+  background-position: -97px -4px;
+}
+
+.icon-subtract {
+  background-position: -161px -4px;
+}
+
+.icon-divide {
+  background-position: -33px -36px;
+}
+
+.icon-multiply {
+  background-position: -1px -36px;
+}
+
+.icon-xor {
+  background-position: -129px -36px;
+}

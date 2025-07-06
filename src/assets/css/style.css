@@ -1,0 +1,397 @@
+:root {
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  /* Color Palette */
+  --background-dark: #1a202c;
+  --background-medium: #2d3748;
+  --background-light: #4a5568;
+  --border-color: #718096;
+  --highlight-blue: #4299e1;
+  --highlight-red: #e53e3e;
+  --text-light: #cbd5e0;
+  --text-white: white;
+}
+
+body {
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Layout */
+#circuit-board {
+  background-color: var(--background-dark);
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 20px 20px;
+  height: calc(100vh - 80px);
+  /* Adjust based on tray height */
+  position: relative;
+}
+
+#wire-layer {
+  pointer-events: none;
+}
+
+/* Wires */
+.wire {
+  stroke: var(--highlight-blue);
+  stroke-width: 4;
+  fill: none;
+  pointer-events: stroke;
+  cursor: pointer;
+}
+
+.wire:hover {
+  stroke-width: 6;
+}
+
+.wire-group.selected .wire {
+  stroke: var(--highlight-red);
+}
+
+.wire.temp {
+  stroke: var(--highlight-red);
+  stroke-dasharray: 5, 5;
+}
+
+.wire-hitbox {
+  stroke: transparent;
+  stroke-width: 12px;
+  fill: none;
+  cursor: pointer;
+}
+
+.wire.animated {
+  stroke-dasharray: 5, 5;
+  animation: pulse-wire 1s linear infinite;
+}
+
+/* Components */
+.component {
+  background-color: var(--background-light);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  color: var(--text-white);
+  width: 150px;
+  flex-shrink: 0;
+}
+
+.component.is-moving {
+  cursor: grabbing;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  z-index: 10;
+}
+
+.component.selected {
+  outline: 2px solid var(--highlight-blue);
+  outline-offset: 2px;
+}
+
+.component-header {
+  background-color: var(--background-medium);
+  padding: 0.25rem 0.5rem;
+  font-weight: bold;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.component-body {
+  padding: 0.5rem;
+}
+
+.component-pin {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.25rem;
+  padding: 0.2rem;
+  cursor: pointer;
+}
+
+.component-pin span {
+  font-size: 0.8rem;
+}
+
+.component-value-display {
+  background-color: #1a202c;
+  /* A darker background, like an LCD screen */
+  border: 1px solid #000;
+  border-radius: 3px;
+  padding: 0.25rem 0.25rem;
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: bold;
+  text-align: right;
+  color: #38a169;
+  /* A green, digital-style text color */
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5);
+  margin-top: 0.5rem;
+  overflow-x: auto;
+  white-space: nowrap;
+  text-align: left;
+  /* Align text to the left for better readability */
+}
+
+
+/* Improve scrollbar appearance */
+.component-value-display::-webkit-scrollbar {
+  height: 4px;
+}
+
+.component-value-display::-webkit-scrollbar-thumb {
+  background-color: #555;
+  border-radius: 2px;
+}
+
+.component-value-display::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.component-pin.in {
+  justify-content: flex-start;
+  gap: 10px;
+}
+
+.component-pin.out {
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.pin-circle {
+  width: 10px;
+  height: 10px;
+  border: 1px solid var(--text-light);
+  border-radius: 50%;
+  background-color: var(--background-medium);
+  fill: #343a40;
+  stroke: #f0f0f0;
+  stroke-width: 2px;
+  transition: r 0.2s ease-in-out;
+}
+
+.new-wire-zone {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background-color: transparent;
+  cursor: crosshair;
+  z-index: 100;
+}
+
+.wire-group,
+.wire {
+  pointer-events: auto;
+}
+
+.waypoint {
+  fill: var(--highlight-blue);
+  stroke: var(--text-white);
+  stroke-width: 2;
+  cursor: move;
+}
+
+.component-counter {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background-color: var(--background-medium);
+  color: var(--text-light);
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+  z-index: 100;
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.simulation-controls {
+  position: absolute;
+  top: 4rem;
+  right: 1rem;
+  background-color: var(--background-medium);
+  color: var(--text-light);
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+  z-index: 100;
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+#config-panel-container {
+  position: absolute;
+  top: 7.3rem;
+  right: 1rem;
+  width: 250px;
+  z-index: 100;
+}
+
+/* Config Panel */
+.config-panel {
+  background-color: var(--background-medium);
+  color: var(--text-light);
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+}
+
+.config-panel-header {
+  padding: 0.75rem 1rem;
+  font-weight: bold;
+  border-bottom: 1px solid var(--border-color);
+  margin: 0;
+}
+
+.config-panel-body {
+  padding: 1rem;
+}
+
+.config-panel-footer {
+  padding: 0.5rem 1rem;
+  border-top: 1px solid var(--border-color);
+  background-color: var(--background-dark);
+  font-size: 0.8em;
+  color: var(--text-light);
+  border-bottom-left-radius: 4px;
+  border-bottom-right-radius: 4px;
+}
+
+.config-panel-footer code {
+  background-color: var(--background-light);
+  padding: 2px 4px;
+  border-radius: 3px;
+}
+
+.config-panel .form-group {
+  margin-bottom: 0.75rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.config-panel .form-group label {
+  font-size: 12px;
+}
+
+.config-panel .form-group:last-child {
+  margin-bottom: 0;
+}
+
+
+.config-panel .form-control {
+  width: 80px;
+  background-color: #2c3245;
+  border: 1px solid #4d556e;
+  color: white;
+  border-radius: 3px;
+  padding: 2px 4px;
+  font-size: 12px;
+}
+
+/* Tray Components (Graphical) */
+.component.graphical {
+  position: relative;
+  width: 120px;
+  height: 90px;
+  background-color: var(--background-medium);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  box-sizing: border-box;
+  color: var(--highlight-blue);
+  /* Icon color */
+  cursor: grab;
+}
+
+.component.graphical .icon-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.component.graphical .pins-in {
+  position: absolute;
+  left: 10px;
+  top: 0;
+  height: 100%;
+}
+
+.component.graphical .pins-out {
+  position: absolute;
+  right: 10px;
+  top: 0;
+  height: 100%;
+}
+
+.component.graphical .component-icon {
+  width: 30px;
+  height: 24px;
+  color: currentColor;
+}
+
+.component.graphical .component-name {
+  font-size: 12px;
+}
+
+.wire-label-container {
+  pointer-events: none;
+}
+
+.wire-label-background {
+  color: #f0f0f0;
+  font-size: 18px;
+  font-family: monospace;
+  background-color: #343a40;
+  border: 2px solid var(--highlight-blue);
+  border-radius: 4px;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+}
+
+.wire-label-background.selected {
+  border-color: var(--highlight-red);
+}
+
+@keyframes pulse-wire {
+  to {
+    stroke-dashoffset: -20;
+  }
+}
+
+.tool-icon {
+  font-size: 0.8em;
+  color: #6c757d;
+  /* A muted color */
+  opacity: 0.7;
+}
+
+.tool-icon.tray {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  z-index: 1;
+}

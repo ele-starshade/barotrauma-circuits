@@ -1,0 +1,16 @@
+{
+  "all": true,
+  "include": [
+    "src/**/*.{js,vue}"
+  ],
+  "exclude": [
+    "**/*.spec.js"
+  ],
+  "reporter": [
+    "text",
+    "lcov",
+    "json"
+  ],
+  "report-dir": "coverage/cypress",
+  "temp-dir": ".nyc_output/cypress"
+}
