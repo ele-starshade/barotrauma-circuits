@@ -239,9 +239,11 @@ const toolComponents = computed(() =>
   font-size: 0.85rem;
   color: var(--text-muted);
 }
+
 .hints-list li {
   margin-bottom: 0.5rem;
 }
+
 .hints-list kbd {
   background-color: var(--background-dark);
   border-radius: 3px;
@@ -257,7 +259,7 @@ const toolComponents = computed(() =>
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   gap: 0.75rem;
   overflow-y: auto;
-  max-height: 175px;
+  scrollbar-gutter: stable;
   border-radius: 4px;
 }
 
@@ -265,6 +267,8 @@ const toolComponents = computed(() =>
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   gap: 0.75rem;
+  overflow-y: auto;
+  max-height: calc(200px - 0.75rem - 4.6rem); /* Tray height minus padding/header/gaps */
 }
 
 .tray-header {
