@@ -46,7 +46,7 @@
       </div>
       <div class="form-group">
         <label :for="`output-${id}`" title="The signal sent when the condition is met.">Output</label>
-        <input :id="`output-${id}`" type="text" class="form-control" v-model="localSettings.output" @input="updateSettings">
+        <input :id="`output-${id}`" type="text" class="form-control" v-model="effectiveOutput" @input="updateSettings" :disabled="isOutputOverridden">
       </div>
       <div class="form-group">
         <label :for="`false-output-${id}`" title="The signal sent when the condition is not met (if empty, no signal is sent).">False output</label>
@@ -72,6 +72,10 @@ const props = defineProps({
     type: String,
     default: 'board' // 'board' or 'tray'
   },
+  componentData: {
+    type: Object,
+    default: () => ({})
+  },
   settings: {
     type: Object,
     default: () => ({
@@ -86,6 +90,22 @@ const props = defineProps({
 const circuit = useCircuitStore()
 
 const isSelected = computed(() => circuit.selectedComponentId === props.id)
+
+const isOutputOverridden = computed(() => props.componentData?.inputs?.SET_OUTPUT !== undefined)
+
+const effectiveOutput = computed({
+  get: () => {
+    if (isOutputOverridden.value) {
+      return props.componentData.inputs.SET_OUTPUT
+    }
+    return localSettings.output
+  },
+  set: (newValue) => {
+    if (!isOutputOverridden.value) {
+      localSettings.output = newValue
+    }
+  }
+})
 
 const localSettings = reactive({ ...props.settings })
 

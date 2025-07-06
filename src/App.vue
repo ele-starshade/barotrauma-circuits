@@ -31,6 +31,7 @@
       :is="component.is"
       :style="{ position: 'absolute', left: `${component.x}px`, top: `${component.y}px` }"
       :data-id="component.id"
+      :component-data="component"
       :class="{
         'is-moving': circuit.movingComponentInfo && circuit.movingComponentInfo.id === component.id,
         'selected': circuit.selectedComponentId === component.id

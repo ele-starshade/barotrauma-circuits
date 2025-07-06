@@ -720,10 +720,8 @@ export const useCircuitStore = defineStore('circuit', {
                 if (toComponent.name === 'Adder' || toComponent.name === 'And' || toComponent.name === 'Subtract' || toComponent.name === 'Multiply' || toComponent.name === 'Divide' || toComponent.name === 'Xor' || toComponent.name === 'Greater') {
                   if (!toComponent.lastSignalTimestamps) toComponent.lastSignalTimestamps = {}
 
-                  if ((toComponent.name === 'And' || toComponent.name === 'Greater') && wire.toPin === 'SET_OUTPUT') {
-                    if (toComponent.settings.output !== value) {
-                      toComponent.settings.output = value
-                    }
+                  if ((toComponent.name === 'And' || toComponent.name === 'Greater' || toComponent.name === 'Xor') && wire.toPin === 'SET_OUTPUT') {
+                    // Do nothing here, the value is read directly from inputs in the simulation tick
                   } else {
                     toComponent.lastSignalTimestamps[wire.toPin] = Date.now()
                   }
