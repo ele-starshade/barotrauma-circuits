@@ -1,6 +1,5 @@
 <template>
-  <SimulationControls />
-  <ComponentCounter />
+  <TopBar />
   <div id="config-panel-container"></div>
   <div
     id="circuit-board-wrapper"
@@ -89,8 +88,7 @@
 import { onMounted, onUnmounted, ref } from 'vue'
 import { useCircuitStore } from './stores/circuit'
 
-import ComponentCounter from './components/ComponentCounter.vue'
-import SimulationControls from './components/SimulationControls.vue'
+import TopBar from './components/TopBar.vue'
 import WireLabel from './components/WireLabel.vue'
 import ComponentTray from './components/ComponentTray.vue'
 
@@ -223,7 +221,7 @@ onUnmounted(() => {
 <style>
 #circuit-board-wrapper {
   width: 100vw;
-  height: calc(100vh - 175px);
+  height: calc(100vh - 175px - 50px);
   overflow: auto;
   cursor: grab;
 }
