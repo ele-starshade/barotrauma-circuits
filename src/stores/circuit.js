@@ -12,6 +12,7 @@ import SubtractComponent from '../components/circuit/SubtractComponent.vue'
 import DivideComponent from '../components/circuit/DivideComponent.vue'
 import XorComponent from '../components/circuit/XorComponent.vue'
 import SignalCheckComponent from '../components/circuit/SignalCheckComponent.vue'
+import GreaterComponent from '../components/circuit/GreaterComponent.vue'
 
 const componentMap = {
   Adder: AdderComponent,
@@ -23,7 +24,8 @@ const componentMap = {
   Subtract: SubtractComponent,
   Divide: DivideComponent,
   Xor: XorComponent,
-  SignalCheck: SignalCheckComponent
+  SignalCheck: SignalCheckComponent,
+  Greater: GreaterComponent
 }
 
 const toast = useToast()
@@ -164,7 +166,7 @@ export const useCircuitStore = defineStore('circuit', {
         newComponent.currentOutput = 0
       }
 
-      if (['Adder', 'Subtract', 'Multiply', 'Divide', 'And'].includes(newComponent.name)) {
+      if (['Adder', 'Subtract', 'Multiply', 'Divide', 'And', 'Greater'].includes(newComponent.name)) {
         newComponent.lastSignalTimestamps = {}
       }
 
@@ -490,7 +492,7 @@ export const useCircuitStore = defineStore('circuit', {
 
         // First, determine the output of each component based on its current inputs.
         this.boardComponents.forEach(component => {
-          const outputPin = (component.name === 'Adder' || component.name === 'And' || component.name === 'Subtract' || component.name === 'Multiply' || component.name === 'Divide' || component.name === 'Xor' || component.name === 'SignalCheck') ? 'SIGNAL_OUT' : 'VALUE_OUT'
+          const outputPin = (component.name === 'Adder' || component.name === 'And' || component.name === 'Subtract' || component.name === 'Multiply' || component.name === 'Divide' || component.name === 'Xor' || component.name === 'SignalCheck' || component.name === 'Greater') ? 'SIGNAL_OUT' : 'VALUE_OUT'
           const key = `${component.id}:${outputPin}`
           const currentValue = outputValues.get(key)
           let newValue
@@ -665,6 +667,36 @@ export const useCircuitStore = defineStore('circuit', {
             } else {
               newValue = ''
             }
+          } else if (component.name === 'Greater') {
+            const { lastSignalTimestamps, settings, inputs } = component
+            const in1 = inputs?.SIGNAL_IN_1
+            const in2 = inputs?.SIGNAL_IN_2
+            const in1Timestamp = lastSignalTimestamps?.SIGNAL_IN_1
+            const in2Timestamp = lastSignalTimestamps?.SIGNAL_IN_2
+
+            let conditionMet = false
+            if (in1 !== undefined && in2 !== undefined && in1Timestamp && in2Timestamp) {
+              const timeDiff = Math.abs(in1Timestamp - in2Timestamp)
+              if (settings.timeframe === 0.0 || timeDiff <= settings.timeframe) {
+                const num1 = parseFloat(in1) || 0
+                const num2 = parseFloat(in2) || 0
+                if (num1 > num2) {
+                  conditionMet = true
+                }
+              }
+            }
+
+            if (conditionMet) {
+              newValue = inputs?.SET_OUTPUT ?? settings.output
+            } else {
+              newValue = settings.falseOutput
+            }
+
+            if (newValue !== undefined && newValue !== '') {
+              newValue = String(newValue).substring(0, settings.maxOutputLength)
+            } else {
+              newValue = ''
+            }
           }
 
           if (newValue !== undefined && currentValue !== newValue) {
@@ -685,10 +717,10 @@ export const useCircuitStore = defineStore('circuit', {
               if (toComponent.inputs[wire.toPin] !== value) {
                 toComponent.inputs[wire.toPin] = value
                 changedInLoop = true // Input changed, may cause downstream changes.
-                if (toComponent.name === 'Adder' || toComponent.name === 'And' || toComponent.name === 'Subtract' || toComponent.name === 'Multiply' || toComponent.name === 'Divide' || toComponent.name === 'Xor') {
+                if (toComponent.name === 'Adder' || toComponent.name === 'And' || toComponent.name === 'Subtract' || toComponent.name === 'Multiply' || toComponent.name === 'Divide' || toComponent.name === 'Xor' || toComponent.name === 'Greater') {
                   if (!toComponent.lastSignalTimestamps) toComponent.lastSignalTimestamps = {}
 
-                  if (toComponent.name === 'And' && wire.toPin === 'SET_OUTPUT') {
+                  if ((toComponent.name === 'And' || toComponent.name === 'Greater') && wire.toPin === 'SET_OUTPUT') {
                     if (toComponent.settings.output !== value) {
                       toComponent.settings.output = value
                     }

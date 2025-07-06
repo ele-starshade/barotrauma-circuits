@@ -48,6 +48,7 @@ const MultiplyComponent = defineAsyncComponent(() => import('./circuit/MultiplyC
 const DivideComponent = defineAsyncComponent(() => import('./circuit/DivideComponent.vue'))
 const XorComponent = defineAsyncComponent(() => import('./circuit/XorComponent.vue'))
 const SignalCheckComponent = defineAsyncComponent(() => import('./circuit/SignalCheckComponent.vue'))
+const GreaterComponent = defineAsyncComponent(() => import('./circuit/GreaterComponent.vue'))
 
 const circuit = useCircuitStore()
 
@@ -118,6 +119,16 @@ const trayComponents = shallowRef([
     is: SignalCheckComponent,
     settings: {
       target_signal: '1',
+      output: '1',
+      falseOutput: '0',
+      maxOutputLength: 200
+    }
+  },
+  {
+    name: 'Greater',
+    is: GreaterComponent,
+    settings: {
+      timeframe: 0.0,
       output: '1',
       falseOutput: '0',
       maxOutputLength: 200
