@@ -307,12 +307,14 @@ export const useCircuitStore = defineStore('circuit', {
         const toId = inPinEl.closest('.component').dataset.id
         const toPin = inPinEl.dataset.pinName
 
-        const isInputPinOccupied = this.wires.some(w => w.toId === toId && w.toPin === toPin)
-
-        if (isInputPinOccupied) {
-          toast.error('Input pin is already connected.')
-          this.wiringInfo = null
-          return
+        const isSignalInPin = toPin.startsWith('SIGNAL_IN')
+        if (isSignalInPin) {
+          const isInputPinOccupied = this.wires.some(w => w.toId === toId && w.toPin === toPin)
+          if (isInputPinOccupied) {
+            toast.error('Input pin is already connected.')
+            this.wiringInfo = null
+            return
+          }
         }
 
         const outCircleEl = outPinEl.querySelector('.pin-circle')
@@ -714,17 +716,29 @@ export const useCircuitStore = defineStore('circuit', {
 
             if (toComponent) {
               if (!toComponent.inputs) toComponent.inputs = {}
-              if (toComponent.inputs[wire.toPin] !== value) {
-                toComponent.inputs[wire.toPin] = value
-                changedInLoop = true // Input changed, may cause downstream changes.
-                if (toComponent.name === 'Adder' || toComponent.name === 'And' || toComponent.name === 'Subtract' || toComponent.name === 'Multiply' || toComponent.name === 'Divide' || toComponent.name === 'Xor' || toComponent.name === 'Greater') {
-                  if (!toComponent.lastSignalTimestamps) toComponent.lastSignalTimestamps = {}
+              const isSignalIn = wire.toPin.startsWith('SIGNAL_IN')
 
-                  if ((toComponent.name === 'And' || toComponent.name === 'Greater' || toComponent.name === 'Xor') && wire.toPin === 'SET_OUTPUT') {
-                    // Do nothing here, the value is read directly from inputs in the simulation tick
-                  } else {
-                    toComponent.lastSignalTimestamps[wire.toPin] = Date.now()
-                  }
+              if (isSignalIn) {
+                if (toComponent.inputs[wire.toPin] !== value) {
+                  toComponent.inputs[wire.toPin] = value
+                  changedInLoop = true // Input changed, may cause downstream changes.
+                }
+              } else {
+                // For non-signal pins, we allow multiple connections,
+                // but only the last signal received should be processed.
+                // We'll handle this by assigning the value directly,
+                // and the order of processing will determine the final value.
+                toComponent.inputs[wire.toPin] = value
+                changedInLoop = true
+              }
+
+              if (toComponent.name === 'Adder' || toComponent.name === 'And' || toComponent.name === 'Subtract' || toComponent.name === 'Multiply' || toComponent.name === 'Divide' || toComponent.name === 'Xor' || toComponent.name === 'Greater') {
+                if (!toComponent.lastSignalTimestamps) toComponent.lastSignalTimestamps = {}
+
+                if ((toComponent.name === 'And' || toComponent.name === 'Greater' || toComponent.name === 'Xor') && wire.toPin === 'SET_OUTPUT') {
+                  // Do nothing here, the value is read directly from inputs in the simulation tick
+                } else {
+                  toComponent.lastSignalTimestamps[wire.toPin] = Date.now()
                 }
               }
             }
