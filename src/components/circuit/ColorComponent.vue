@@ -1,34 +1,39 @@
 <template>
   <!-- Tray Version (Graphical) -->
-  <div v-if="mode === 'tray'" v-bind="$attrs" class="component graphical" data-component-type="atan">
-    <ComponentPins class="pins-in" :count="3" />
+  <div v-if="mode === 'tray'" v-bind="$attrs" class="component graphical" data-component-type="color">
+    <ComponentPins class="pins-in" :count="4" />
 
     <div class="icon-container">
-      <div class="component-icon-sprite icon-atan" />
-      <div class="component-name">Atan</div>
+      <div class="component-icon-sprite icon-color" />
+      <div class="component-name">Color</div>
     </div>
 
     <ComponentPins class="pins-out" :count="1" />
   </div>
 
   <!-- Board Version (Text-based) -->
-  <div v-else v-bind="$attrs" class="component text-based" data-component-type="atan" :id="props.id">
-    <div class="component-header">Atan</div>
+  <div v-else v-bind="$attrs" class="component text-based" data-component-type="color" :id="props.id">
+    <div class="component-header">Color</div>
     <div class="component-body">
-      <div class="component-pin in" data-pin-name="SIGNAL_IN">
-        <div class="new-wire-zone" @mousedown.stop="handleStartWiring('SIGNAL_IN')"></div>
+      <div class="component-pin in" data-pin-name="SIGNAL_IN_R">
+        <div class="new-wire-zone" @mousedown.stop="handleStartWiring('SIGNAL_IN_R')"></div>
         <div class="pin-circle"></div>
-        <span>SIGNAL_IN</span>
+        <span>SIGNAL_R</span>
       </div>
-      <div class="component-pin in" data-pin-name="SIGNAL_IN_Y">
-        <div class="new-wire-zone" @mousedown.stop="handleStartWiring('SIGNAL_IN_Y')"></div>
+      <div class="component-pin in" data-pin-name="SIGNAL_IN_G">
+        <div class="new-wire-zone" @mousedown.stop="handleStartWiring('SIGNAL_IN_G')"></div>
         <div class="pin-circle"></div>
-        <span>SIGNAL_IN_Y</span>
+        <span>SIGNAL_G</span>
       </div>
-      <div class="component-pin in" data-pin-name="SIGNAL_IN_X">
-        <div class="new-wire-zone" @mousedown.stop="handleStartWiring('SIGNAL_IN_X')"></div>
+      <div class="component-pin in" data-pin-name="SIGNAL_IN_B">
+        <div class="new-wire-zone" @mousedown.stop="handleStartWiring('SIGNAL_IN_B')"></div>
         <div class="pin-circle"></div>
-        <span>SIGNAL_IN_X</span>
+        <span>SIGNAL_B</span>
+      </div>
+      <div class="component-pin in" data-pin-name="SIGNAL_IN_A">
+        <div class="new-wire-zone" @mousedown.stop="handleStartWiring('SIGNAL_IN_A')"></div>
+        <div class="pin-circle"></div>
+        <span>SIGNAL_A</span>
       </div>
       <div class="component-pin out" data-pin-name="SIGNAL_OUT">
         <span>SIGNAL_OUT</span>
@@ -39,11 +44,11 @@
   </div>
 
   <Teleport to="#config-panel-container" v-if="isSelected && mode === 'board'">
-    <ConfigPanel title="Atan Component">
+    <ConfigPanel title="Color Component">
       <div class="form-check">
-        <input class="form-check-input" type="checkbox" v-model="localSettings.useRadians" :id="`use-radians-${id}`" @change="updateSettings">
-        <label class="form-check-label" :for="`use-radians-${id}`">
-          Use radians
+        <input class="form-check-input" type="checkbox" v-model="localSettings.useHSV" :id="`use-hsv-${id}`" @change="updateSettings">
+        <label class="form-check-label" :for="`use-hsv-${id}`">
+          Use HSV
         </label>
       </div>
     </ConfigPanel>
@@ -65,7 +70,7 @@ const props = defineProps({
   settings: {
     type: Object,
     default: () => ({
-      useRadians: false
+      useHSV: false
     })
   }
 })

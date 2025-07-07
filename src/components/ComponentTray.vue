@@ -65,6 +65,7 @@ const AcosComponent = markRaw(defineAsyncComponent(() => import('./circuit/AcosC
 const AsinComponent = markRaw(defineAsyncComponent(() => import('./circuit/AsinComponent.vue')))
 const AtanComponent = markRaw(defineAsyncComponent(() => import('./circuit/AtanComponent.vue')))
 const CeilComponent = markRaw(defineAsyncComponent(() => import('./circuit/CeilComponent.vue')))
+const ColorComponent = markRaw(defineAsyncComponent(() => import('./circuit/ColorComponent.vue')))
 
 const circuit = useCircuitStore()
 
@@ -241,6 +242,14 @@ const trayComponents = shallowRef([
     name: 'Ceil',
     is: CeilComponent,
     value: ''
+  },
+  {
+    name: 'Color',
+    is: ColorComponent,
+    value: '',
+    settings: {
+      useHSV: false
+    }
   }
 ])
 

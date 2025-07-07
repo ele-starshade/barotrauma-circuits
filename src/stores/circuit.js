@@ -4,6 +4,7 @@ import pako from 'pako'
 
 import parseColor from '../utils/parseColor.js'
 import distanceToLineSegment from '../utils/distanceToLineSegment.js'
+import hsvToRgb from '../utils/hsvToRgb.js'
 
 import AdderComponent from '../components/circuit/AdderComponent.vue'
 import AndComponent from '../components/circuit/AndComponent.vue'
@@ -22,6 +23,7 @@ import AcosComponent from '../components/circuit/AcosComponent.vue'
 import AsinComponent from '../components/circuit/AsinComponent.vue'
 import AtanComponent from '../components/circuit/AtanComponent.vue'
 import CeilComponent from '../components/circuit/CeilComponent.vue'
+import ColorComponent from '../components/circuit/ColorComponent.vue'
 
 const componentMap = {
   Adder: AdderComponent,
@@ -40,7 +42,8 @@ const componentMap = {
   Acos: AcosComponent,
   Asin: AsinComponent,
   Atan: AtanComponent,
-  Ceil: CeilComponent
+  Ceil: CeilComponent,
+  Color: ColorComponent
 }
 
 const toast = useToast()
@@ -315,6 +318,10 @@ export const useCircuitStore = defineStore('circuit', {
 
       if (newComponent.name === 'Ceil') {
         // Ceil component has no specific state to initialize here
+      }
+
+      if (newComponent.name === 'Color') {
+        newComponent.lastSignalTimestamps = {}
       }
 
       this.boardComponents.push(newComponent)
@@ -1228,7 +1235,7 @@ export const useCircuitStore = defineStore('circuit', {
 
         // First, determine the output of each component based on its current inputs.
         this.boardComponents.forEach(component => {
-          const outputPin = (component.name === 'Adder' || component.name === 'And' || component.name === 'Subtract' || component.name === 'Multiply' || component.name === 'Divide' || component.name === 'Xor' || component.name === 'SignalCheck' || component.name === 'Greater' || component.name === 'Abs' || component.name === 'Acos' || component.name === 'Asin' || component.name === 'Atan' || component.name === 'Ceil') ? 'SIGNAL_OUT' : 'VALUE_OUT'
+          const outputPin = (component.name === 'Adder' || component.name === 'And' || component.name === 'Subtract' || component.name === 'Multiply' || component.name === 'Divide' || component.name === 'Xor' || component.name === 'SignalCheck' || component.name === 'Greater' || component.name === 'Abs' || component.name === 'Acos' || component.name === 'Asin' || component.name === 'Atan' || component.name === 'Ceil' || component.name === 'Color') ? 'SIGNAL_OUT' : 'VALUE_OUT'
           const key = `${component.id}:${outputPin}`
           const currentValue = outputValues.get(key)
           let newValue
@@ -1249,6 +1256,7 @@ export const useCircuitStore = defineStore('circuit', {
             case 'Asin': newValue = this._processAsinTick(component); break
             case 'Atan': newValue = this._processAtanTick(component); break
             case 'Ceil': newValue = this._processCeilTick(component); break
+            case 'Color': newValue = this._processColorTick(component); break
           }
 
           if (newValue !== undefined && currentValue !== newValue) {
@@ -1260,26 +1268,27 @@ export const useCircuitStore = defineStore('circuit', {
         // Handle components that don't produce output but change state (e.g., Light)
         this.boardComponents.forEach(component => {
           if (component.name === 'Light') {
-            const { inputs } = component
+            const { inputs, settings } = component
             let newIsOn = component.isOn
             let newColor = component.color
 
-            // Handle SET_STATE
+            // Handle state inputs
             const setState = inputs?.SET_STATE
+            const toggleState = inputs?.TOGGLE_STATE
 
             if (setState !== undefined) {
               // eslint-disable-next-line eqeqeq
               newIsOn = setState != 0
-            }
-
-            // Handle TOGGLE_STATE - toggle only on a new truthy signal
-            const toggleState = inputs?.TOGGLE_STATE
-
-            if (toggleState !== undefined && toggleState !== component.lastToggleState) {
-              // eslint-disable-next-line eqeqeq
-              if (toggleState != 0) {
-                newIsOn = !component.isOn
+            } else if (toggleState !== undefined) {
+              if (toggleState !== component.lastToggleState) {
+                // eslint-disable-next-line eqeqeq
+                if (toggleState != 0) {
+                  newIsOn = !component.isOn
+                }
               }
+            } else {
+              // Not wired for state, use settings
+              newIsOn = settings.isOn
             }
 
             component.lastToggleState = toggleState
@@ -1295,7 +1304,7 @@ export const useCircuitStore = defineStore('circuit', {
               }
             } else {
               // If not overridden by a wire, use the component's own setting
-              newColor = component.settings.color
+              newColor = settings.color
             }
 
             // Update component state if changed
@@ -2256,6 +2265,47 @@ export const useCircuitStore = defineStore('circuit', {
 
         return Math.ceil(num)
       }
+    },
+
+    /**
+     * Processes a single tick for a Color component in the circuit simulation.
+     *
+     * Outputs a combined color signal for light control.
+     *
+     * @param {Object} component - The Color component to process.
+     * @returns {string|undefined} The combined color string (e.g., "r,g,b,a"), or undefined.
+     */
+    _processColorTick (component) {
+      const { inputs, settings } = component
+
+      const rIn = inputs?.SIGNAL_IN_R
+      const gIn = inputs?.SIGNAL_IN_G
+      const bIn = inputs?.SIGNAL_IN_B
+      const aIn = inputs?.SIGNAL_IN_A
+
+      if (rIn === undefined && gIn === undefined && bIn === undefined && aIn === undefined) {
+        return undefined // No inputs, no output
+      }
+
+      let r, g, b
+      const a = Math.max(0, Math.min(255, parseInt(aIn, 10) || 0))
+
+      if (settings.useHSV) {
+        const h = Math.max(0, Math.min(360, parseFloat(rIn) || 0))
+        const s = Math.max(0, Math.min(1, parseFloat(gIn) || 0))
+        const v = Math.max(0, Math.min(1, parseFloat(bIn) || 0))
+        const rgb = hsvToRgb(h, s, v)
+
+        r = rgb.r
+        g = rgb.g
+        b = rgb.b
+      } else {
+        r = Math.max(0, Math.min(255, parseInt(rIn, 10) || 0))
+        g = Math.max(0, Math.min(255, parseInt(gIn, 10) || 0))
+        b = Math.max(0, Math.min(255, parseInt(bIn, 10) || 0))
+      }
+
+      return `${r},${g},${b},${a}`
     },
 
     // --- Import/Export Actions ---
