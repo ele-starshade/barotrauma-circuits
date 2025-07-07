@@ -5,7 +5,7 @@
 
     <div class="icon-container">
       <div class="component-icon-sprite icon-square-root" />
-      <div class="component-name">SquareRoot</div>
+      <div class="component-name">Square Root</div>
     </div>
 
     <ComponentPins class="pins-out" :count="1" />
@@ -13,7 +13,7 @@
 
   <!-- Board Version (Text-based) -->
   <div v-else v-bind="$attrs" class="component text-based" data-component-type="square-root" :id="props.id">
-    <div class="component-header">SquareRoot</div>
+    <div class="component-header">Square Root</div>
     <div class="component-body">
       <div class="component-pin in" data-pin-name="SIGNAL_IN">
         <div class="new-wire-zone" @mousedown.stop="handleStartWiring('SIGNAL_IN')"></div>

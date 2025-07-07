@@ -43,6 +43,7 @@ import RelayComponent from '../components/circuit/RelayComponent.vue'
 import RoundComponent from '../components/circuit/RoundComponent.vue'
 import SinComponent from '../components/circuit/SinComponent.vue'
 import SquareRootComponent from '../components/circuit/SquareRootComponent.vue'
+import TanComponent from '../components/circuit/TanComponent.vue'
 
 const componentMap = {
   Adder: AdderComponent,
@@ -81,7 +82,8 @@ const componentMap = {
   Relay: RelayComponent,
   Round: RoundComponent,
   Sin: SinComponent,
-  SquareRoot: SquareRootComponent
+  SquareRoot: SquareRootComponent,
+  Tan: TanComponent
 }
 
 const toast = useToast()
@@ -444,6 +446,10 @@ export const useCircuitStore = defineStore('circuit', {
 
       if (newComponent.name === 'SquareRoot') {
         // SquareRoot component has no specific state to initialize here
+      }
+
+      if (newComponent.name === 'Tan') {
+        // Tan component has no specific state to initialize here
       }
 
       this.boardComponents.push(newComponent)
@@ -1395,6 +1401,7 @@ export const useCircuitStore = defineStore('circuit', {
             case 'Round': newValues = this._processRoundTick(component); break
             case 'Sin': newValues = this._processSinTick(component); break
             case 'SquareRoot': newValues = this._processSquareRootTick(component); break
+            case 'Tan': newValues = this._processTanTick(component); break
             case 'Display': this._processDisplayTick(component); break
           }
 
@@ -3176,6 +3183,30 @@ export const useCircuitStore = defineStore('circuit', {
 
         if (!isNaN(num) && num >= 0) {
           return { SIGNAL_OUT: Math.sqrt(num) }
+        }
+      }
+
+      return { SIGNAL_OUT: 0 }
+    },
+
+    /**
+     * Processes a single tick for a Tan component.
+     * @param {Object} component The component to process.
+     * @returns {Object|undefined} An object with SIGNAL_OUT.
+     */
+    _processTanTick (component) {
+      const { inputs, settings } = component
+      const signalIn = inputs?.SIGNAL_IN
+
+      if (signalIn !== undefined) {
+        let num = parseFloat(signalIn)
+
+        if (!isNaN(num)) {
+          if (!settings.useRadians) {
+            num = num * (Math.PI / 180) // Convert degrees to radians
+          }
+
+          return { SIGNAL_OUT: Math.tan(num) }
         }
       }
 

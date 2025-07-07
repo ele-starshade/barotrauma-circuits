@@ -85,6 +85,7 @@ const RelayComponent = markRaw(defineAsyncComponent(() => import('./circuit/Rela
 const RoundComponent = markRaw(defineAsyncComponent(() => import('./circuit/RoundComponent.vue')))
 const SinComponent = markRaw(defineAsyncComponent(() => import('./circuit/SinComponent.vue')))
 const SquareRootComponent = markRaw(defineAsyncComponent(() => import('./circuit/SquareRootComponent.vue')))
+const TanComponent = markRaw(defineAsyncComponent(() => import('./circuit/TanComponent.vue')))
 
 const circuit = useCircuitStore()
 
@@ -419,6 +420,13 @@ const trayComponents = shallowRef([
   {
     name: 'SquareRoot',
     is: SquareRootComponent
+  },
+  {
+    name: 'Tan',
+    is: TanComponent,
+    settings: {
+      useRadians: false
+    }
   }
 ])
 
