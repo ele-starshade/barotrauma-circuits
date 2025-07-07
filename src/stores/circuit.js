@@ -26,6 +26,7 @@ import CeilComponent from '../components/circuit/CeilComponent.vue'
 import ColorComponent from '../components/circuit/ColorComponent.vue'
 import ConcatenationComponent from '../components/circuit/ConcatenationComponent.vue'
 import CosComponent from '../components/circuit/CosComponent.vue'
+import DelayComponent from '../components/circuit/DelayComponent.vue'
 
 const componentMap = {
   Adder: AdderComponent,
@@ -47,7 +48,8 @@ const componentMap = {
   Ceil: CeilComponent,
   Color: ColorComponent,
   Concatenation: ConcatenationComponent,
-  Cos: CosComponent
+  Cos: CosComponent,
+  Delay: DelayComponent
 }
 
 const toast = useToast()
@@ -334,6 +336,13 @@ export const useCircuitStore = defineStore('circuit', {
 
       if (newComponent.name === 'Cos') {
         // Cos component has no specific state to initialize here
+      }
+
+      if (newComponent.name === 'Delay') {
+        newComponent.pendingSignals = []
+        newComponent.lastSignalIn = undefined
+        newComponent.lastProcessedTimestamp = 0
+        newComponent.lastSignalTimestamps = {}
       }
 
       this.boardComponents.push(newComponent)
@@ -1134,7 +1143,7 @@ export const useCircuitStore = defineStore('circuit', {
       this.simulationRunning = true
       this.simulationIntervalId = setInterval(() => {
         this.tick()
-      }, 100)
+      }, 50)
     },
 
     /**
@@ -1247,7 +1256,7 @@ export const useCircuitStore = defineStore('circuit', {
 
         // First, determine the output of each component based on its current inputs.
         this.boardComponents.forEach(component => {
-          const outputPin = (component.name === 'Adder' || component.name === 'And' || component.name === 'Subtract' || component.name === 'Multiply' || component.name === 'Divide' || component.name === 'Xor' || component.name === 'SignalCheck' || component.name === 'Greater' || component.name === 'Abs' || component.name === 'Acos' || component.name === 'Asin' || component.name === 'Atan' || component.name === 'Ceil' || component.name === 'Color' || component.name === 'Concatenation' || component.name === 'Cos') ? 'SIGNAL_OUT' : 'VALUE_OUT'
+          const outputPin = (component.name === 'Adder' || component.name === 'And' || component.name === 'Subtract' || component.name === 'Multiply' || component.name === 'Divide' || component.name === 'Xor' || component.name === 'SignalCheck' || component.name === 'Greater' || component.name === 'Abs' || component.name === 'Acos' || component.name === 'Asin' || component.name === 'Atan' || component.name === 'Ceil' || component.name === 'Color' || component.name === 'Concatenation' || component.name === 'Cos' || component.name === 'Delay') ? 'SIGNAL_OUT' : 'VALUE_OUT'
           const key = `${component.id}:${outputPin}`
           const currentValue = outputValues.get(key)
           let newValue
@@ -1271,6 +1280,7 @@ export const useCircuitStore = defineStore('circuit', {
             case 'Color': newValue = this._processColorTick(component); break
             case 'Concatenation': newValue = this._processConcatenationTick(component); break
             case 'Cos': newValue = this._processCosTick(component); break
+            case 'Delay': newValue = this._processDelayTick(component); break
           }
 
           if (newValue !== undefined && currentValue !== newValue) {
@@ -1361,7 +1371,7 @@ export const useCircuitStore = defineStore('circuit', {
                 changedInLoop = true
               }
 
-              if (toComponent.name === 'Adder' || toComponent.name === 'And' || toComponent.name === 'Subtract' || toComponent.name === 'Multiply' || toComponent.name === 'Divide' || toComponent.name === 'Xor' || toComponent.name === 'Greater' || toComponent.name === 'Concatenation') {
+              if (toComponent.name === 'Adder' || toComponent.name === 'And' || toComponent.name === 'Subtract' || toComponent.name === 'Multiply' || toComponent.name === 'Divide' || toComponent.name === 'Xor' || toComponent.name === 'Greater' || toComponent.name === 'Concatenation' || toComponent.name === 'Delay') {
                 if (!toComponent.lastSignalTimestamps) toComponent.lastSignalTimestamps = {}
 
                 if ((toComponent.name === 'And' || toComponent.name === 'Greater' || toComponent.name === 'Xor') && wire.toPin === 'SET_OUTPUT') {
@@ -2371,6 +2381,53 @@ export const useCircuitStore = defineStore('circuit', {
 
         return Math.cos(num)
       }
+    },
+
+    /**
+     * Processes a single tick for a Delay component in the circuit simulation.
+     *
+     * Queues incoming signals and releases them after a specified delay.
+     *
+     * @param {Object} component - The Delay component to process.
+     * @returns {any|undefined} The value of a signal whose delay has elapsed, or undefined.
+     */
+    _processDelayTick (component) {
+      const { inputs, settings, lastSignalTimestamps } = component
+      const signalIn = inputs?.SIGNAL_IN
+      const signalTimestamp = lastSignalTimestamps?.SIGNAL_IN
+
+      // Enqueue new signal if it's new
+      if (signalTimestamp && signalTimestamp !== component.lastProcessedTimestamp) {
+        const delayInMs = (parseFloat(inputs?.SET_DELAY) || settings.delay) * 1000
+
+        if (settings.resetOnNewSignal) {
+          component.pendingSignals = []
+        }
+
+        if (settings.resetOnDifferentSignal && signalIn !== component.lastSignalIn) {
+          component.pendingSignals = []
+        }
+
+        component.pendingSignals.push({
+          value: signalIn,
+          releaseTime: Date.now() + delayInMs
+        })
+
+        component.lastSignalIn = signalIn
+        component.lastProcessedTimestamp = signalTimestamp
+      }
+
+      // Dequeue a signal if its time has come
+      let output
+      const now = Date.now()
+      const readySignalIndex = component.pendingSignals.findIndex(s => s.releaseTime <= now)
+
+      if (readySignalIndex > -1) {
+        output = component.pendingSignals[readySignalIndex].value
+        component.pendingSignals.splice(readySignalIndex, 1)
+      }
+
+      return output
     },
 
     // --- Import/Export Actions ---

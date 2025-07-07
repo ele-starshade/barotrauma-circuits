@@ -68,6 +68,7 @@ const CeilComponent = markRaw(defineAsyncComponent(() => import('./circuit/CeilC
 const ColorComponent = markRaw(defineAsyncComponent(() => import('./circuit/ColorComponent.vue')))
 const ConcatenationComponent = markRaw(defineAsyncComponent(() => import('./circuit/ConcatenationComponent.vue')))
 const CosComponent = markRaw(defineAsyncComponent(() => import('./circuit/CosComponent.vue')))
+const DelayComponent = markRaw(defineAsyncComponent(() => import('./circuit/DelayComponent.vue')))
 
 const circuit = useCircuitStore()
 
@@ -269,6 +270,16 @@ const trayComponents = shallowRef([
     value: '',
     settings: {
       useRadians: false
+    }
+  },
+  {
+    name: 'Delay',
+    is: DelayComponent,
+    value: '',
+    settings: {
+      delay: 1.0,
+      resetOnNewSignal: false,
+      resetOnDifferentSignal: false
     }
   }
 ])
