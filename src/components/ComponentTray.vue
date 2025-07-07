@@ -76,6 +76,7 @@ const FloorComponent = markRaw(defineAsyncComponent(() => import('./circuit/Floo
 const InputSelectorComponent = markRaw(defineAsyncComponent(() => import('./circuit/InputSelectorComponent.vue')))
 const MemoryComponent = markRaw(defineAsyncComponent(() => import('./circuit/MemoryComponent.vue')))
 const ModuloComponent = markRaw(defineAsyncComponent(() => import('./circuit/ModuloComponent.vue')))
+const NotComponent = markRaw(defineAsyncComponent(() => import('./circuit/NotComponent.vue')))
 
 const circuit = useCircuitStore()
 
@@ -340,6 +341,13 @@ const trayComponents = shallowRef([
     is: ModuloComponent,
     settings: {
       modulus: 1
+    }
+  },
+  {
+    name: 'Not',
+    is: NotComponent,
+    settings: {
+      continuousOutput: false
     }
   }
 ])
