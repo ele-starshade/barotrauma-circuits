@@ -33,6 +33,7 @@ import EqualsComponent from '../components/circuit/EqualsComponent.vue'
 import FloorComponent from '../components/circuit/FloorComponent.vue'
 import InputSelectorComponent from '../components/circuit/InputSelectorComponent.vue'
 import MemoryComponent from '../components/circuit/MemoryComponent.vue'
+import ModuloComponent from '../components/circuit/ModuloComponent.vue'
 
 const componentMap = {
   Adder: AdderComponent,
@@ -61,7 +62,8 @@ const componentMap = {
   Equals: EqualsComponent,
   Floor: FloorComponent,
   InputSelector: InputSelectorComponent,
-  Memory: MemoryComponent
+  Memory: MemoryComponent,
+  Modulo: ModuloComponent
 }
 
 const toast = useToast()
@@ -380,6 +382,10 @@ export const useCircuitStore = defineStore('circuit', {
 
       if (newComponent.name === 'Memory') {
         newComponent.value = newComponent.settings.value
+      }
+
+      if (newComponent.name === 'Modulo') {
+        // Modulo component has no specific state to initialize here
       }
 
       this.boardComponents.push(newComponent)
@@ -1321,6 +1327,7 @@ export const useCircuitStore = defineStore('circuit', {
             case 'Equals': newValues = this._processEqualsTick(component); break
             case 'InputSelector': newValues = this._processInputSelectorTick(component); break
             case 'Memory': newValues = this._processMemoryTick(component); break
+            case 'Modulo': newValues = this._processModuloTick(component); break
           }
 
           if (newValues) {
@@ -2695,6 +2702,31 @@ export const useCircuitStore = defineStore('circuit', {
       }
 
       return { SIGNAL_OUT: component.value }
+    },
+
+    /**
+     * Processes a single tick for a Modulo component in the circuit simulation.
+     *
+     * Outputs the remainder of a division operation.
+     *
+     * @param {Object} component - The Modulo component to process.
+     * @returns {Object|undefined} An object with SIGNAL_OUT.
+     */
+    _processModuloTick (component) {
+      const { inputs, settings } = component
+      const signalIn = inputs?.SIGNAL_IN
+      const modulus = inputs?.SET_MODULUS ?? settings.modulus
+
+      if (signalIn !== undefined) {
+        const numSignal = parseFloat(signalIn) || 0
+        const numModulus = parseFloat(modulus) || 0
+
+        if (numModulus === 0) {
+          return { SIGNAL_OUT: 0 }
+        }
+
+        return { SIGNAL_OUT: numSignal % numModulus }
+      }
     },
 
     // --- Import/Export Actions ---
