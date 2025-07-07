@@ -61,6 +61,7 @@ const SignalCheckComponent = markRaw(defineAsyncComponent(() => import('./circui
 const GreaterComponent = markRaw(defineAsyncComponent(() => import('./circuit/GreaterComponent.vue')))
 const LightComponent = markRaw(defineAsyncComponent(() => import('./circuit/tools/LightComponent.vue')))
 const AbsComponent = markRaw(defineAsyncComponent(() => import('./circuit/AbsComponent.vue')))
+const AcosComponent = markRaw(defineAsyncComponent(() => import('./circuit/AcosComponent.vue')))
 
 const circuit = useCircuitStore()
 
@@ -192,7 +193,7 @@ const trayComponents = shallowRef([
   {
     name: 'Display',
     is: DisplayComponent,
-    value: '',
+    value: null,
     isTool: true
   },
   {
@@ -208,6 +209,14 @@ const trayComponents = shallowRef([
     name: 'Abs',
     is: AbsComponent,
     value: ''
+  },
+  {
+    name: 'Acos',
+    is: AcosComponent,
+    value: '',
+    settings: {
+      useRadians: false
+    }
   }
 ])
 

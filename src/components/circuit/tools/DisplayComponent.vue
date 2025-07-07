@@ -25,7 +25,7 @@
         <span>SIGNAL_IN_1</span>
       </div>
       <div v-if="component" class="component-value-display">
-        {{ component.value || 'no signal' }}
+        {{ component.value ?? 'no signal' }}
       </div>
     </div>
   </div>
@@ -44,8 +44,8 @@ const props = defineProps({
     default: 'board' // 'board' or 'tray'
   },
   value: {
-    type: String,
-    default: ''
+    type: [String, null],
+    default: null
   },
   isTool: {
     type: Boolean,
@@ -65,5 +65,4 @@ function handleStartWiring (pinName) {
 const component = computed(() => {
   return circuit.boardComponents.find(c => c.id === props.id)
 })
-
 </script>

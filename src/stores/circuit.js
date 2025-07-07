@@ -18,6 +18,7 @@ import SignalCheckComponent from '../components/circuit/SignalCheckComponent.vue
 import GreaterComponent from '../components/circuit/GreaterComponent.vue'
 import LightComponent from '../components/circuit/tools/LightComponent.vue'
 import AbsComponent from '../components/circuit/AbsComponent.vue'
+import AcosComponent from '../components/circuit/AcosComponent.vue'
 
 const componentMap = {
   Adder: AdderComponent,
@@ -32,7 +33,8 @@ const componentMap = {
   SignalCheck: SignalCheckComponent,
   Greater: GreaterComponent,
   Light: LightComponent,
-  Abs: AbsComponent
+  Abs: AbsComponent,
+  Acos: AcosComponent
 }
 
 const toast = useToast()
@@ -291,6 +293,10 @@ export const useCircuitStore = defineStore('circuit', {
 
       if (newComponent.name === 'Abs') {
         // Abs component has no specific state to initialize here
+      }
+
+      if (newComponent.name === 'Acos') {
+        // Acos component has no specific state to initialize here
       }
 
       this.boardComponents.push(newComponent)
@@ -1040,7 +1046,7 @@ export const useCircuitStore = defineStore('circuit', {
         }
 
         if (component.name === 'Display') {
-          component.value = ''
+          component.value = null
         }
 
         if (component.name === 'Light') {
@@ -1204,7 +1210,7 @@ export const useCircuitStore = defineStore('circuit', {
 
         // First, determine the output of each component based on its current inputs.
         this.boardComponents.forEach(component => {
-          const outputPin = (component.name === 'Adder' || component.name === 'And' || component.name === 'Subtract' || component.name === 'Multiply' || component.name === 'Divide' || component.name === 'Xor' || component.name === 'SignalCheck' || component.name === 'Greater' || component.name === 'Abs') ? 'SIGNAL_OUT' : 'VALUE_OUT'
+          const outputPin = (component.name === 'Adder' || component.name === 'And' || component.name === 'Subtract' || component.name === 'Multiply' || component.name === 'Divide' || component.name === 'Xor' || component.name === 'SignalCheck' || component.name === 'Greater' || component.name === 'Abs' || component.name === 'Acos') ? 'SIGNAL_OUT' : 'VALUE_OUT'
           const key = `${component.id}:${outputPin}`
           const currentValue = outputValues.get(key)
           let newValue
@@ -1221,6 +1227,7 @@ export const useCircuitStore = defineStore('circuit', {
             case 'SignalCheck': newValue = this._processSignalCheckTick(component); break
             case 'Greater': newValue = this._processGreaterTick(component); break
             case 'Abs': newValue = this._processAbsTick(component); break
+            case 'Acos': newValue = this._processAcosTick(component); break
           }
 
           if (newValue !== undefined && currentValue !== newValue) {
@@ -1339,7 +1346,7 @@ export const useCircuitStore = defineStore('circuit', {
 
       this.boardComponents.forEach(component => {
         if (component.name === 'Display') {
-          component.value = component.inputs?.SIGNAL_IN_1 ?? ''
+          component.value = component.inputs?.SIGNAL_IN_1 ?? null
         }
       })
     },
@@ -2070,6 +2077,65 @@ export const useCircuitStore = defineStore('circuit', {
         const num = parseFloat(signalIn) || 0
 
         return Math.abs(num)
+      }
+    },
+
+    /**
+     * Processes a single tick for an Acos component in the circuit simulation
+     *
+     * The Acos Component is an electrical component that performs the inverse cosine
+     * function; cos-1(x). It outputs the angle whose cosine is equal to the input.
+     *
+     * @param {Object} component - The Acos component to process
+     * @param {Object} component.inputs - The input signal values
+     * @param {number|string} component.inputs.SIGNAL_IN - The input signal, clamped to [-1, 1]
+     * @param {Object} component.settings - The component's configuration settings
+     * @param {boolean} component.settings.useRadians - If set to true, the trigonometric function uses radians instead of degrees.
+     * @returns {number|undefined} The arccosine of the input, or undefined if the input is not valid
+     *
+     * @example
+     * // Input 0.5, useRadians: false (default) -> Output: 60 (degrees)
+     * const component = {
+     *   inputs: { SIGNAL_IN: 0.5 },
+     *   settings: { useRadians: false }
+     * }
+     * const result = circuitStore._processAcosTick(component)
+     * console.log(result) // 60.00000000000001
+     *
+     * @example
+     * // Input 0.5, useRadians: true -> Output: 1.047... (radians)
+     * const component = {
+     *   inputs: { SIGNAL_IN: 0.5 },
+     *   settings: { useRadians: true }
+     * }
+     * const result = circuitStore._processAcosTick(component)
+     * console.log(result) // 1.0471975511965979
+     *
+     * @example
+     * // Input clamped to 1, output in degrees
+     * const component = {
+     *   inputs: { SIGNAL_IN: 5 },
+     *   settings: { useRadians: false }
+     * }
+     * const result = circuitStore._processAcosTick(component)
+     * console.log(result) // 0
+     */
+    _processAcosTick (component) {
+      const signalIn = component.inputs?.SIGNAL_IN
+
+      if (signalIn !== undefined) {
+        let num = parseFloat(signalIn) || 0
+
+        // Clamp the input value to the valid range for acos [-1, 1]
+        num = Math.max(-1, Math.min(1, num))
+
+        let angle = Math.acos(num)
+
+        if (!component.settings.useRadians) {
+          angle = angle * (180 / Math.PI)
+        }
+
+        return angle
       }
     },
 
