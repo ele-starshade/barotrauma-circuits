@@ -67,6 +67,7 @@ const AtanComponent = markRaw(defineAsyncComponent(() => import('./circuit/AtanC
 const CeilComponent = markRaw(defineAsyncComponent(() => import('./circuit/CeilComponent.vue')))
 const ColorComponent = markRaw(defineAsyncComponent(() => import('./circuit/ColorComponent.vue')))
 const ConcatenationComponent = markRaw(defineAsyncComponent(() => import('./circuit/ConcatenationComponent.vue')))
+const CosComponent = markRaw(defineAsyncComponent(() => import('./circuit/CosComponent.vue')))
 
 const circuit = useCircuitStore()
 
@@ -260,6 +261,14 @@ const trayComponents = shallowRef([
       maxOutputLength: 200,
       separator: '',
       timeframe: 0.0
+    }
+  },
+  {
+    name: 'Cos',
+    is: CosComponent,
+    value: '',
+    settings: {
+      useRadians: false
     }
   }
 ])

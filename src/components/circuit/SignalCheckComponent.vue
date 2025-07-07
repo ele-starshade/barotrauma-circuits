@@ -5,7 +5,7 @@
 
     <div class="icon-container">
       <div class="component-icon-sprite icon-signal-check" />
-      <div class="component-name">SignalCheck</div>
+      <div class="component-name">Signal Check</div>
     </div>
 
     <ComponentPins class="pins-out" :count="1" />
@@ -13,7 +13,7 @@
 
   <!-- Board Version (Text-based) -->
   <div v-else v-bind="$attrs" class="component text-based" data-component-type="signalcheck" :id="props.id">
-    <div class="component-header">SignalCheck</div>
+    <div class="component-header">Signal Check</div>
     <div class="component-body">
       <div class="component-pin in" data-pin-name="SIGNAL_IN">
         <div class="new-wire-zone" @mousedown.stop="handleStartWiring('SIGNAL_IN')"></div>

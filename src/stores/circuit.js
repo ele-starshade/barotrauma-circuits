@@ -25,6 +25,7 @@ import AtanComponent from '../components/circuit/AtanComponent.vue'
 import CeilComponent from '../components/circuit/CeilComponent.vue'
 import ColorComponent from '../components/circuit/ColorComponent.vue'
 import ConcatenationComponent from '../components/circuit/ConcatenationComponent.vue'
+import CosComponent from '../components/circuit/CosComponent.vue'
 
 const componentMap = {
   Adder: AdderComponent,
@@ -45,7 +46,8 @@ const componentMap = {
   Atan: AtanComponent,
   Ceil: CeilComponent,
   Color: ColorComponent,
-  Concatenation: ConcatenationComponent
+  Concatenation: ConcatenationComponent,
+  Cos: CosComponent
 }
 
 const toast = useToast()
@@ -328,6 +330,10 @@ export const useCircuitStore = defineStore('circuit', {
 
       if (newComponent.name === 'Concatenation') {
         newComponent.lastSignalTimestamps = {}
+      }
+
+      if (newComponent.name === 'Cos') {
+        // Cos component has no specific state to initialize here
       }
 
       this.boardComponents.push(newComponent)
@@ -1241,7 +1247,7 @@ export const useCircuitStore = defineStore('circuit', {
 
         // First, determine the output of each component based on its current inputs.
         this.boardComponents.forEach(component => {
-          const outputPin = (component.name === 'Adder' || component.name === 'And' || component.name === 'Subtract' || component.name === 'Multiply' || component.name === 'Divide' || component.name === 'Xor' || component.name === 'SignalCheck' || component.name === 'Greater' || component.name === 'Abs' || component.name === 'Acos' || component.name === 'Asin' || component.name === 'Atan' || component.name === 'Ceil' || component.name === 'Color' || component.name === 'Concatenation') ? 'SIGNAL_OUT' : 'VALUE_OUT'
+          const outputPin = (component.name === 'Adder' || component.name === 'And' || component.name === 'Subtract' || component.name === 'Multiply' || component.name === 'Divide' || component.name === 'Xor' || component.name === 'SignalCheck' || component.name === 'Greater' || component.name === 'Abs' || component.name === 'Acos' || component.name === 'Asin' || component.name === 'Atan' || component.name === 'Ceil' || component.name === 'Color' || component.name === 'Concatenation' || component.name === 'Cos') ? 'SIGNAL_OUT' : 'VALUE_OUT'
           const key = `${component.id}:${outputPin}`
           const currentValue = outputValues.get(key)
           let newValue
@@ -1264,6 +1270,7 @@ export const useCircuitStore = defineStore('circuit', {
             case 'Ceil': newValue = this._processCeilTick(component); break
             case 'Color': newValue = this._processColorTick(component); break
             case 'Concatenation': newValue = this._processConcatenationTick(component); break
+            case 'Cos': newValue = this._processCosTick(component); break
           }
 
           if (newValue !== undefined && currentValue !== newValue) {
@@ -2340,6 +2347,29 @@ export const useCircuitStore = defineStore('circuit', {
 
           return result.substring(0, settings.maxOutputLength)
         }
+      }
+    },
+
+    /**
+     * Processes a single tick for a Cos component in the circuit simulation.
+     *
+     * Outputs the cosine of the input signal.
+     *
+     * @param {Object} component - The Cos component to process.
+     * @returns {number|undefined} The cosine of the input, or undefined.
+     */
+    _processCosTick (component) {
+      const signalIn = component.inputs?.SIGNAL_IN
+
+      if (signalIn !== undefined) {
+        let num = parseFloat(signalIn) || 0
+
+        if (!component.settings.useRadians) {
+          // Input is in degrees, convert to radians for Math.cos
+          num = num * (Math.PI / 180)
+        }
+
+        return Math.cos(num)
       }
     },
 
