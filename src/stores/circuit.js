@@ -1204,16 +1204,16 @@ export const useCircuitStore = defineStore('circuit', {
           let newValue
 
           switch (component.name) {
-            case 'Constant': this._processConstantTick(component); break
-            case 'Random': this._processRandomTick(component); break
-            case 'Adder': this._processAdderTick(component); break
-            case 'And': this._processAndTick(component); break
-            case 'Subtract': this._processSubtractTick(component); break
-            case 'Multiply': this._processMultiplyTick(component); break
-            case 'Divide': this._processDivideTick(component); break
-            case 'Xor': this._processXorTick(component); break
-            case 'SignalCheck': this._processSignalCheckTick(component); break
-            case 'Greater': this._processGreaterTick(component); break
+            case 'Constant': newValue = this._processConstantTick(component); break
+            case 'Random': newValue = this._processRandomTick(component); break
+            case 'Adder': newValue = this._processAdderTick(component); break
+            case 'And': newValue = this._processAndTick(component); break
+            case 'Subtract': newValue = this._processSubtractTick(component); break
+            case 'Multiply': newValue = this._processMultiplyTick(component); break
+            case 'Divide': newValue = this._processDivideTick(component); break
+            case 'Xor': newValue = this._processXorTick(component); break
+            case 'SignalCheck': newValue = this._processSignalCheckTick(component); break
+            case 'Greater': newValue = this._processGreaterTick(component); break
           }
 
           if (newValue !== undefined && currentValue !== newValue) {
