@@ -83,6 +83,7 @@ const OutputSelectorComponent = markRaw(defineAsyncComponent(() => import('./cir
 const RegExComponent = markRaw(defineAsyncComponent(() => import('./circuit/RegExComponent.vue')))
 const RelayComponent = markRaw(defineAsyncComponent(() => import('./circuit/RelayComponent.vue')))
 const RoundComponent = markRaw(defineAsyncComponent(() => import('./circuit/RoundComponent.vue')))
+const SinComponent = markRaw(defineAsyncComponent(() => import('./circuit/SinComponent.vue')))
 
 const circuit = useCircuitStore()
 
@@ -406,6 +407,13 @@ const trayComponents = shallowRef([
   {
     name: 'Round',
     is: RoundComponent
+  },
+  {
+    name: 'Sin',
+    is: SinComponent,
+    settings: {
+      useRadians: false
+    }
   }
 ])
 

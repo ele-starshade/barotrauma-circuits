@@ -2,7 +2,7 @@
 
 This file tracks the implementation status of various components for the circuit simulator.
 
-**Completion Status: 31/35 (88.57%)**
+**Completion Status: 32/35 (91.43%)**
 
 ## Component Checklist
 
@@ -35,7 +35,7 @@ This file tracks the implementation status of various components for the circuit
 - [x] Relay
 - [x] Round
 - [x] Signal Check
-- [ ] Sin
+- [x] Sin
 - [ ] Square Root
 - [x] Subtract
 - [ ] Tan

@@ -41,6 +41,7 @@ import OutputSelectorComponent from '../components/circuit/OutputSelectorCompone
 import RegExComponent from '../components/circuit/RegExComponent.vue'
 import RelayComponent from '../components/circuit/RelayComponent.vue'
 import RoundComponent from '../components/circuit/RoundComponent.vue'
+import SinComponent from '../components/circuit/SinComponent.vue'
 
 const componentMap = {
   Adder: AdderComponent,
@@ -77,7 +78,8 @@ const componentMap = {
   OutputSelector: OutputSelectorComponent,
   RegEx: RegExComponent,
   Relay: RelayComponent,
-  Round: RoundComponent
+  Round: RoundComponent,
+  Sin: SinComponent
 }
 
 const toast = useToast()
@@ -432,6 +434,10 @@ export const useCircuitStore = defineStore('circuit', {
 
       if (newComponent.name === 'Round') {
         // Round component has no specific state to initialize here
+      }
+
+      if (newComponent.name === 'Sin') {
+        // Sin component has no specific state to initialize here
       }
 
       this.boardComponents.push(newComponent)
@@ -1381,6 +1387,7 @@ export const useCircuitStore = defineStore('circuit', {
             case 'RegEx': newValues = this._processRegExTick(component); break
             case 'Relay': newValues = this._processRelayTick(component); break
             case 'Round': newValues = this._processRoundTick(component); break
+            case 'Sin': newValues = this._processSinTick(component); break
             case 'Display': this._processDisplayTick(component); break
           }
 
@@ -3119,6 +3126,30 @@ export const useCircuitStore = defineStore('circuit', {
 
         if (!isNaN(num)) {
           return { SIGNAL_OUT: Math.round(num) }
+        }
+      }
+
+      return { SIGNAL_OUT: 0 }
+    },
+
+    /**
+     * Processes a single tick for a Sin component.
+     * @param {Object} component The component to process.
+     * @returns {Object|undefined} An object with SIGNAL_OUT.
+     */
+    _processSinTick (component) {
+      const { inputs, settings } = component
+      const signalIn = inputs?.SIGNAL_IN
+
+      if (signalIn !== undefined) {
+        let num = parseFloat(signalIn)
+
+        if (!isNaN(num)) {
+          if (!settings.useRadians) {
+            num = num * (Math.PI / 180) // Convert degrees to radians
+          }
+
+          return { SIGNAL_OUT: Math.sin(num) }
         }
       }
 
