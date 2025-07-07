@@ -31,6 +31,7 @@ import ExponentiationComponent from '../components/circuit/ExponentiationCompone
 import FactorialComponent from '../components/circuit/FactorialComponent.vue'
 import EqualsComponent from '../components/circuit/EqualsComponent.vue'
 import FloorComponent from '../components/circuit/FloorComponent.vue'
+import InputSelectorComponent from '../components/circuit/InputSelectorComponent.vue'
 
 const componentMap = {
   Adder: AdderComponent,
@@ -57,7 +58,8 @@ const componentMap = {
   Exponentiation: ExponentiationComponent,
   Factorial: FactorialComponent,
   Equals: EqualsComponent,
-  Floor: FloorComponent
+  Floor: FloorComponent,
+  InputSelector: InputSelectorComponent
 }
 
 const toast = useToast()
@@ -367,6 +369,11 @@ export const useCircuitStore = defineStore('circuit', {
 
       if (newComponent.name === 'Floor') {
         // Floor component has no specific state to initialize here
+      }
+
+      if (newComponent.name === 'InputSelector') {
+        newComponent.lastSignalTimestamps = {}
+        newComponent.lastMoveSignal = 0
       }
 
       this.boardComponents.push(newComponent)
@@ -1280,40 +1287,46 @@ export const useCircuitStore = defineStore('circuit', {
 
         // First, determine the output of each component based on its current inputs.
         this.boardComponents.forEach(component => {
-          const outputPin = (component.name === 'Adder' || component.name === 'And' || component.name === 'Subtract' || component.name === 'Multiply' || component.name === 'Divide' || component.name === 'Xor' || component.name === 'SignalCheck' || component.name === 'Greater' || component.name === 'Abs' || component.name === 'Acos' || component.name === 'Asin' || component.name === 'Atan' || component.name === 'Ceil' || component.name === 'Color' || component.name === 'Concatenation' || component.name === 'Cos' || component.name === 'Delay' || component.name === 'Exponentiation' || component.name === 'Factorial' || component.name === 'Equals' || component.name === 'Floor') ? 'SIGNAL_OUT' : 'VALUE_OUT'
-          const key = `${component.id}:${outputPin}`
-          const currentValue = outputValues.get(key)
-          let newValue
+          let newValues
 
           switch (component.name) {
-            case 'Constant': newValue = this._processConstantTick(component); break
-            case 'Random': newValue = this._processRandomTick(component); break
-            case 'Adder': newValue = this._processAdderTick(component); break
-            case 'And': newValue = this._processAndTick(component); break
-            case 'Subtract': newValue = this._processSubtractTick(component); break
-            case 'Multiply': newValue = this._processMultiplyTick(component); break
-            case 'Divide': newValue = this._processDivideTick(component); break
-            case 'Xor': newValue = this._processXorTick(component); break
-            case 'SignalCheck': newValue = this._processSignalCheckTick(component); break
-            case 'Greater': newValue = this._processGreaterTick(component); break
-            case 'Abs': newValue = this._processAbsTick(component); break
-            case 'Acos': newValue = this._processAcosTick(component); break
-            case 'Asin': newValue = this._processAsinTick(component); break
-            case 'Atan': newValue = this._processAtanTick(component); break
-            case 'Ceil': newValue = this._processCeilTick(component); break
-            case 'Color': newValue = this._processColorTick(component); break
-            case 'Concatenation': newValue = this._processConcatenationTick(component); break
-            case 'Cos': newValue = this._processCosTick(component); break
-            case 'Delay': newValue = this._processDelayTick(component); break
-            case 'Exponentiation': newValue = this._processExponentiationTick(component); break
-            case 'Factorial': newValue = this._processFactorialTick(component); break
-            case 'Equals': newValue = this._processEqualsTick(component); break
-            case 'Floor': newValue = this._processFloorTick(component); break
+            case 'Constant': newValues = this._processConstantTick(component); break
+            case 'Random': newValues = this._processRandomTick(component); break
+            case 'Adder': newValues = this._processAdderTick(component); break
+            case 'And': newValues = this._processAndTick(component); break
+            case 'Subtract': newValues = this._processSubtractTick(component); break
+            case 'Multiply': newValues = this._processMultiplyTick(component); break
+            case 'Divide': newValues = this._processDivideTick(component); break
+            case 'Xor': newValues = this._processXorTick(component); break
+            case 'SignalCheck': newValues = this._processSignalCheckTick(component); break
+            case 'Greater': newValues = this._processGreaterTick(component); break
+            case 'Abs': newValues = this._processAbsTick(component); break
+            case 'Acos': newValues = this._processAcosTick(component); break
+            case 'Asin': newValues = this._processAsinTick(component); break
+            case 'Atan': newValues = this._processAtanTick(component); break
+            case 'Ceil': newValues = this._processCeilTick(component); break
+            case 'Floor': newValues = this._processFloorTick(component); break
+            case 'Color': newValues = this._processColorTick(component); break
+            case 'Concatenation': newValues = this._processConcatenationTick(component); break
+            case 'Cos': newValues = this._processCosTick(component); break
+            case 'Delay': newValues = this._processDelayTick(component); break
+            case 'Exponentiation': newValues = this._processExponentiationTick(component); break
+            case 'Factorial': newValues = this._processFactorialTick(component); break
+            case 'Equals': newValues = this._processEqualsTick(component); break
+            case 'InputSelector': newValues = this._processInputSelectorTick(component); break
           }
 
-          if (newValue !== undefined && currentValue !== newValue) {
-            outputValues.set(key, newValue)
-            changedInLoop = true
+          if (newValues) {
+            for (const pinName in newValues) {
+              const key = `${component.id}:${pinName}`
+              const currentValue = outputValues.get(key)
+              const newValue = newValues[pinName]
+
+              if (newValue !== undefined && currentValue !== newValue) {
+                outputValues.set(key, newValue)
+                changedInLoop = true
+              }
+            }
           }
         })
 
@@ -1463,7 +1476,7 @@ export const useCircuitStore = defineStore('circuit', {
      * console.log(output) // "5"
      */
     _processConstantTick (component) {
-      return component.value
+      return { VALUE_OUT: component.value }
     },
 
     /**
@@ -1510,7 +1523,7 @@ export const useCircuitStore = defineStore('circuit', {
      * console.log(output) // 42
      */
     _processRandomTick (component) {
-      return component.currentOutput
+      return { VALUE_OUT: component.currentOutput }
     },
 
     /**
@@ -1584,7 +1597,7 @@ export const useCircuitStore = defineStore('circuit', {
 
           if (settings.clampMin !== undefined) sum = Math.max(sum, settings.clampMin)
 
-          return sum
+          return { SIGNAL_OUT: sum }
         }
       }
     },
@@ -1678,7 +1691,7 @@ export const useCircuitStore = defineStore('circuit', {
         newValue = ''
       }
 
-      return newValue
+      return { SIGNAL_OUT: newValue }
     },
 
     /**
@@ -1742,7 +1755,7 @@ export const useCircuitStore = defineStore('circuit', {
 
           if (settings.clampMin !== undefined) difference = Math.max(difference, settings.clampMin)
 
-          return difference
+          return { SIGNAL_OUT: difference }
         }
       }
     },
@@ -1808,7 +1821,7 @@ export const useCircuitStore = defineStore('circuit', {
 
           if (settings.clampMin !== undefined) product = Math.max(product, settings.clampMin)
 
-          return product
+          return { SIGNAL_OUT: product }
         }
       }
     },
@@ -1876,7 +1889,7 @@ export const useCircuitStore = defineStore('circuit', {
 
           if (settings.clampMin !== undefined) quotient = Math.max(quotient, settings.clampMin)
 
-          return quotient.toString()
+          return { SIGNAL_OUT: quotient.toString() }
         }
       }
     },
@@ -1972,7 +1985,7 @@ export const useCircuitStore = defineStore('circuit', {
         newValue = ''
       }
 
-      return newValue
+      return { SIGNAL_OUT: newValue }
     },
 
     /**
@@ -2045,7 +2058,7 @@ export const useCircuitStore = defineStore('circuit', {
         newValue = ''
       }
 
-      return newValue
+      return { SIGNAL_OUT: newValue }
     },
 
     /**
@@ -2139,7 +2152,7 @@ export const useCircuitStore = defineStore('circuit', {
         newValue = ''
       }
 
-      return newValue
+      return { SIGNAL_OUT: newValue }
     },
 
     /**
@@ -2158,7 +2171,7 @@ export const useCircuitStore = defineStore('circuit', {
       if (signalIn !== undefined) {
         const num = parseFloat(signalIn) || 0
 
-        return Math.abs(num)
+        return { SIGNAL_OUT: Math.abs(num) }
       }
     },
 
@@ -2217,7 +2230,7 @@ export const useCircuitStore = defineStore('circuit', {
           angle = angle * (180 / Math.PI)
         }
 
-        return angle
+        return { SIGNAL_OUT: angle }
       }
     },
 
@@ -2249,7 +2262,7 @@ export const useCircuitStore = defineStore('circuit', {
           angle = angle * (180 / Math.PI)
         }
 
-        return angle
+        return { SIGNAL_OUT: angle }
       }
     },
 
@@ -2296,7 +2309,7 @@ export const useCircuitStore = defineStore('circuit', {
         angle = angle * (180 / Math.PI)
       }
 
-      return angle
+      return { SIGNAL_OUT: angle }
     },
 
     /**
@@ -2315,7 +2328,7 @@ export const useCircuitStore = defineStore('circuit', {
       if (signalIn !== undefined) {
         const num = parseFloat(signalIn) || 0
 
-        return Math.ceil(num)
+        return { SIGNAL_OUT: Math.ceil(num) }
       }
     },
 
@@ -2335,7 +2348,7 @@ export const useCircuitStore = defineStore('circuit', {
       if (signalIn !== undefined) {
         const num = parseFloat(signalIn) || 0
 
-        return Math.floor(num)
+        return { SIGNAL_OUT: Math.floor(num) }
       }
     },
 
@@ -2377,7 +2390,7 @@ export const useCircuitStore = defineStore('circuit', {
         b = Math.max(0, Math.min(255, parseInt(bIn, 10) || 0))
       }
 
-      return `${r},${g},${b},${a}`
+      return { SIGNAL_OUT: `${r},${g},${b},${a}` }
     },
 
     /**
@@ -2403,7 +2416,7 @@ export const useCircuitStore = defineStore('circuit', {
           const s2 = String(in2 ?? '')
           const result = s1 + settings.separator + s2
 
-          return result.substring(0, settings.maxOutputLength)
+          return { SIGNAL_OUT: result.substring(0, settings.maxOutputLength) }
         }
       }
     },
@@ -2427,7 +2440,7 @@ export const useCircuitStore = defineStore('circuit', {
           num = num * (Math.PI / 180)
         }
 
-        return Math.cos(num)
+        return { SIGNAL_OUT: Math.cos(num) }
       }
     },
 
@@ -2475,7 +2488,7 @@ export const useCircuitStore = defineStore('circuit', {
         component.pendingSignals.splice(readySignalIndex, 1)
       }
 
-      return output
+      return { SIGNAL_OUT: output }
     },
 
     /**
@@ -2495,7 +2508,7 @@ export const useCircuitStore = defineStore('circuit', {
         const numBase = parseFloat(base) || 0
         const numExponent = parseFloat(exponent) || 0
 
-        return Math.pow(numBase, numExponent)
+        return { SIGNAL_OUT: Math.pow(numBase, numExponent) }
       }
     },
 
@@ -2529,7 +2542,7 @@ export const useCircuitStore = defineStore('circuit', {
           result *= i
         }
 
-        return result
+        return { SIGNAL_OUT: result }
       }
     },
 
@@ -2582,7 +2595,74 @@ export const useCircuitStore = defineStore('circuit', {
         newValue = ''
       }
 
-      return newValue
+      return { SIGNAL_OUT: newValue }
+    },
+
+    /**
+     * Processes a single tick for an InputSelector component in the circuit simulation.
+     *
+     * Selects an input and forwards its signal.
+     *
+     * @param {Object} component - The InputSelector component to process.
+     * @returns {Object|undefined} An object with SIGNAL_OUT and SELECTED_INPUT_OUT, or undefined.
+     */
+    _processInputSelectorTick (component) {
+      const { inputs, settings } = component
+      let { selectedConnection } = component.settings
+      const setInput = inputs?.SET_INPUT
+      const moveInput = inputs?.MOVE_INPUT
+
+      // Handle direct setting of the input
+      if (setInput !== undefined) {
+        const newSelection = parseInt(setInput, 10)
+
+        if (!isNaN(newSelection) && newSelection >= 0 && newSelection <= 9) {
+          selectedConnection = newSelection
+        }
+      }
+
+      // Handle moving the selection
+      if (moveInput !== undefined && moveInput !== 0 && moveInput !== component.lastMoveSignal) {
+        const moveAmount = Math.sign(parseFloat(moveInput) || 0)
+        const numInputs = 10
+        let currentIdx = selectedConnection
+
+        for (let i = 0; i < numInputs; i++) {
+          currentIdx = (currentIdx + moveAmount)
+          if (settings.wrapAround) {
+            currentIdx = (currentIdx + numInputs) % numInputs
+          } else {
+            currentIdx = Math.max(0, Math.min(numInputs - 1, currentIdx))
+          }
+
+          if (settings.skipEmptyConnections) {
+            const pinName = `SIGNAL_IN_${currentIdx}`
+            const isConnected = this.wires.some(w => w.toId === component.id && w.toPin === pinName)
+
+            if (isConnected) {
+              break // Found a connected pin
+            }
+          } else {
+            break // Don't skip, take the next one
+          }
+        }
+        selectedConnection = currentIdx
+      }
+
+      component.lastMoveSignal = moveInput
+
+      // Update component's internal state if changed
+      if (selectedConnection !== component.settings.selectedConnection) {
+        component.settings.selectedConnection = selectedConnection
+      }
+
+      const selectedPinName = `SIGNAL_IN_${selectedConnection}`
+      const signalOut = inputs?.[selectedPinName]
+
+      return {
+        SIGNAL_OUT: signalOut,
+        SELECTED_INPUT_OUT: selectedConnection
+      }
     },
 
     // --- Import/Export Actions ---

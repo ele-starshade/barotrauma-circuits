@@ -73,6 +73,7 @@ const ExponentiationComponent = markRaw(defineAsyncComponent(() => import('./cir
 const FactorialComponent = markRaw(defineAsyncComponent(() => import('./circuit/FactorialComponent.vue')))
 const EqualsComponent = markRaw(defineAsyncComponent(() => import('./circuit/EqualsComponent.vue')))
 const FloorComponent = markRaw(defineAsyncComponent(() => import('./circuit/FloorComponent.vue')))
+const InputSelectorComponent = markRaw(defineAsyncComponent(() => import('./circuit/InputSelectorComponent.vue')))
 
 const circuit = useCircuitStore()
 
@@ -313,6 +314,15 @@ const trayComponents = shallowRef([
     name: 'Floor',
     is: FloorComponent,
     value: ''
+  },
+  {
+    name: 'InputSelector',
+    is: InputSelectorComponent,
+    settings: {
+      selectedConnection: 0,
+      wrapAround: true,
+      skipEmptyConnections: true
+    }
   }
 ])
 
