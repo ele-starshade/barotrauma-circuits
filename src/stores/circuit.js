@@ -27,6 +27,7 @@ import ColorComponent from '../components/circuit/ColorComponent.vue'
 import ConcatenationComponent from '../components/circuit/ConcatenationComponent.vue'
 import CosComponent from '../components/circuit/CosComponent.vue'
 import DelayComponent from '../components/circuit/DelayComponent.vue'
+import ExponentiationComponent from '../components/circuit/ExponentiationComponent.vue'
 
 const componentMap = {
   Adder: AdderComponent,
@@ -49,7 +50,8 @@ const componentMap = {
   Color: ColorComponent,
   Concatenation: ConcatenationComponent,
   Cos: CosComponent,
-  Delay: DelayComponent
+  Delay: DelayComponent,
+  Exponentiation: ExponentiationComponent
 }
 
 const toast = useToast()
@@ -342,6 +344,10 @@ export const useCircuitStore = defineStore('circuit', {
         newComponent.pendingSignals = []
         newComponent.lastSignalIn = undefined
         newComponent.lastProcessedTimestamp = 0
+        newComponent.lastSignalTimestamps = {}
+      }
+
+      if (newComponent.name === 'Exponentiation') {
         newComponent.lastSignalTimestamps = {}
       }
 
@@ -1256,7 +1262,7 @@ export const useCircuitStore = defineStore('circuit', {
 
         // First, determine the output of each component based on its current inputs.
         this.boardComponents.forEach(component => {
-          const outputPin = (component.name === 'Adder' || component.name === 'And' || component.name === 'Subtract' || component.name === 'Multiply' || component.name === 'Divide' || component.name === 'Xor' || component.name === 'SignalCheck' || component.name === 'Greater' || component.name === 'Abs' || component.name === 'Acos' || component.name === 'Asin' || component.name === 'Atan' || component.name === 'Ceil' || component.name === 'Color' || component.name === 'Concatenation' || component.name === 'Cos' || component.name === 'Delay') ? 'SIGNAL_OUT' : 'VALUE_OUT'
+          const outputPin = (component.name === 'Adder' || component.name === 'And' || component.name === 'Subtract' || component.name === 'Multiply' || component.name === 'Divide' || component.name === 'Xor' || component.name === 'SignalCheck' || component.name === 'Greater' || component.name === 'Abs' || component.name === 'Acos' || component.name === 'Asin' || component.name === 'Atan' || component.name === 'Ceil' || component.name === 'Color' || component.name === 'Concatenation' || component.name === 'Cos' || component.name === 'Delay' || component.name === 'Exponentiation') ? 'SIGNAL_OUT' : 'VALUE_OUT'
           const key = `${component.id}:${outputPin}`
           const currentValue = outputValues.get(key)
           let newValue
@@ -1281,6 +1287,7 @@ export const useCircuitStore = defineStore('circuit', {
             case 'Concatenation': newValue = this._processConcatenationTick(component); break
             case 'Cos': newValue = this._processCosTick(component); break
             case 'Delay': newValue = this._processDelayTick(component); break
+            case 'Exponentiation': newValue = this._processExponentiationTick(component); break
           }
 
           if (newValue !== undefined && currentValue !== newValue) {
@@ -2428,6 +2435,27 @@ export const useCircuitStore = defineStore('circuit', {
       }
 
       return output
+    },
+
+    /**
+     * Processes a single tick for an Exponentiation component in the circuit simulation.
+     *
+     * Outputs the input raised to a given power.
+     *
+     * @param {Object} component - The Exponentiation component to process.
+     * @returns {number|undefined} The result of the exponentiation, or undefined.
+     */
+    _processExponentiationTick (component) {
+      const { inputs, settings } = component
+      const base = inputs?.SIGNAL_IN
+      const exponent = inputs?.SET_EXPONENT ?? settings.exponent
+
+      if (base !== undefined) {
+        const numBase = parseFloat(base) || 0
+        const numExponent = parseFloat(exponent) || 0
+
+        return Math.pow(numBase, numExponent)
+      }
     },
 
     // --- Import/Export Actions ---

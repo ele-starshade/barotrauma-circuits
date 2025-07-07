@@ -69,6 +69,7 @@ const ColorComponent = markRaw(defineAsyncComponent(() => import('./circuit/Colo
 const ConcatenationComponent = markRaw(defineAsyncComponent(() => import('./circuit/ConcatenationComponent.vue')))
 const CosComponent = markRaw(defineAsyncComponent(() => import('./circuit/CosComponent.vue')))
 const DelayComponent = markRaw(defineAsyncComponent(() => import('./circuit/DelayComponent.vue')))
+const ExponentiationComponent = markRaw(defineAsyncComponent(() => import('./circuit/ExponentiationComponent.vue')))
 
 const circuit = useCircuitStore()
 
@@ -280,6 +281,14 @@ const trayComponents = shallowRef([
       delay: 1.0,
       resetOnNewSignal: false,
       resetOnDifferentSignal: false
+    }
+  },
+  {
+    name: 'Exponentiation',
+    is: ExponentiationComponent,
+    value: '',
+    settings: {
+      exponent: 1.0
     }
   }
 ])
