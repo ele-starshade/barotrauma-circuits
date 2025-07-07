@@ -98,14 +98,17 @@ const finalColor = computed(() => {
   if (componentData.value?.isOn) {
     return componentData.value.color || localSettings.color
   }
+
   return '#333333' // Off color
 })
 
 const lightGlow = computed(() => {
   if (componentData.value?.isOn) {
     const color = componentData.value.color || localSettings.color
+
     return `0 0 15px ${color}`
   }
+
   return 'none'
 })
 
@@ -138,6 +141,7 @@ const displayColor = computed({
       // Fallback to black to prevent errors if the live color isn't immediately available
       return componentData.value?.color || '#000000'
     }
+
     return localSettings.color
   },
   set (newValue) {
@@ -158,6 +162,7 @@ const displayIsOn = computed({
     if (isStateOverridden.value) {
       return componentData.value?.isOn
     }
+
     return localSettings.isOn
   },
   set (newValue) {

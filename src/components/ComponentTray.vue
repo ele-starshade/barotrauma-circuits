@@ -63,6 +63,33 @@ const LightComponent = markRaw(defineAsyncComponent(() => import('./circuit/tool
 
 const circuit = useCircuitStore()
 
+/**
+ * Handles the drag start event for components in the component tray
+ * @param {DragEvent} event - The drag event object containing drag information
+ * @param {Object} component - The component object being dragged
+ * @returns {void}
+ *
+ * @description
+ * This function initiates the drag-and-drop operation for components from the component tray
+ * to the circuit board. It sets up the drag operation with the appropriate visual feedback
+ * and notifies the circuit store about the dragging state.
+ *
+ * The function performs the following operations:
+ * - Sets the drag effect to 'copy' to indicate the component will be copied to the board
+ * - Calls the circuit store's startDraggingComponent method to initialize the drag state
+ * - Passes both the component data and the drag event to the store for processing
+ *
+ * This function is typically called when a user starts dragging a component from the
+ * component tray. The drag operation will continue until the component is dropped
+ * on the circuit board or the drag is cancelled.
+ *
+ * @example
+ * // This function is called by the dragstart event on tray components
+ * <component @dragstart="onDragStart($event, component)" />
+ *
+ * // The component can now be dragged to the circuit board
+ * // The circuit store will handle the drag state and visual feedback
+ */
 function onDragStart (event, component) {
   event.dataTransfer.effectAllowed = 'copy'
   circuit.startDraggingComponent(component, event)

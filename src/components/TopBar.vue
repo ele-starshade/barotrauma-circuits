@@ -59,9 +59,36 @@ const circuit = useCircuitStore()
 // Logic from ComponentCounter.vue
 const componentCount = computed(() => circuit.boardComponents.filter(c => !c.isTool).length)
 
-// Logic from SimulationControls.vue
+/**
+ * Handles the import of circuit data from a user-provided encoded string
+ * @returns {void}
+ *
+ * @description
+ * This function prompts the user to input an encoded circuit data string and
+ * attempts to import the circuit state if a valid string is provided. It uses
+ * the browser's built-in prompt dialog to collect the encoded data from the user.
+ *
+ * The function performs the following operations:
+ * - Displays a prompt dialog asking the user to paste the circuit data string
+ * - Checks if the user provided a non-empty string
+ * - Calls the circuit store's importState method with the provided string
+ * - Does nothing if the user cancels the prompt or provides an empty string
+ *
+ * This function is typically called when the user clicks an import button
+ * in the top bar interface. The imported circuit data will replace the current
+ * circuit state if the import is successful.
+ *
+ * @example
+ * // Call this function when user clicks import button
+ * handleImport()
+ *
+ * // User will see a prompt dialog asking for circuit data
+ * // If they paste a valid encoded string, the circuit will be imported
+ * // If they cancel or provide empty input, nothing happens
+ */
 function handleImport () {
   const encodedString = prompt('Please paste the circuit data string:')
+
   if (encodedString) {
     circuit.importState(encodedString)
   }

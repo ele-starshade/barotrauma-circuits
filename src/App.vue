@@ -97,6 +97,32 @@ const circuitBoardWrapper = ref(null)
 const isPanning = ref(false)
 const panStart = { x: 0, y: 0 }
 
+/**
+ * Starts the panning interaction on the circuit board
+ *
+ * @param {MouseEvent} event - The mouse event that triggered the pan start
+ * @returns {void}
+ *
+ * @description
+ * This function initiates the panning functionality for the circuit board.
+ * It sets up the necessary event listeners and visual feedback for the user.
+ *
+ * The function performs the following operations:
+ * - Sets the isPanning flag to true to track the panning state
+ * - Records the initial mouse position for calculating pan distance
+ * - Changes the cursor to 'grabbing' to provide visual feedback
+ * - Adds global mouse event listeners for move and up events
+ *
+ * After calling this function, the user can drag to pan the circuit board
+ * view. The panning will continue until endPan() is called.
+ *
+ * @example
+ * // Start panning when user presses middle mouse button
+ * circuitBoardWrapper.addEventListener('mousedown', startPan)
+ *
+ * // The user can now drag to pan the circuit board
+ * // Panning will stop when endPan() is called
+ */
 function startPan (event) {
   isPanning.value = true
   panStart.x = event.clientX
@@ -106,16 +132,78 @@ function startPan (event) {
   window.addEventListener('mouseup', endPan)
 }
 
+/**
+ * Handles the panning movement of the circuit board
+ *
+ * @param {MouseEvent} event - The mouse event containing current cursor position
+ * @returns {void}
+ *
+ * @description
+ * This function updates the circuit board's scroll position based on mouse movement
+ * during a panning operation. It calculates the distance moved since the last update
+ * and applies the inverse movement to the scroll position to create the panning effect.
+ *
+ * The function performs the following operations:
+ * - Checks if panning is currently active (early return if not)
+ * - Calculates the delta movement in both X and Y directions
+ * - Updates the circuit board's scroll position by the negative delta values
+ * - Updates the pan start position for the next movement calculation
+ *
+ * This function is called repeatedly during mouse movement while panning is active.
+ * The negative delta values create the effect that the circuit board moves in the
+ * opposite direction of the mouse movement, which is the expected behavior for
+ * panning interactions.
+ *
+ * @example
+ * // This function is typically called by the mousemove event listener
+ * // during an active panning operation
+ * window.addEventListener('mousemove', pan)
+ *
+ * // The circuit board will scroll in response to mouse movement
+ * // until endPan() is called to stop the panning operation
+ */
 function pan (event) {
   if (!isPanning.value) return
+
   const dx = event.clientX - panStart.x
   const dy = event.clientY - panStart.y
+
   circuitBoardWrapper.value.scrollLeft -= dx
   circuitBoardWrapper.value.scrollTop -= dy
   panStart.x = event.clientX
   panStart.y = event.clientY
 }
 
+/**
+ * Ends the panning operation and cleans up event listeners
+ *
+ * @returns {void}
+ *
+ * @description
+ * This function terminates an active panning operation and performs cleanup
+ * operations to restore the application to its normal state. It resets the
+ * panning flag, restores the default cursor, and removes the event listeners
+ * that were added during the startPan() function.
+ *
+ * The function performs the following operations:
+ * - Sets the isPanning flag to false to indicate panning has ended
+ * - Restores the document cursor to its default state
+ * - Removes the mousemove event listener that was handling pan movement
+ * - Removes the mouseup event listener that triggers this function
+ *
+ * This function is typically called when the user releases the middle mouse
+ * button after starting a panning operation. It ensures that the circuit
+ * board returns to its normal interaction state and prevents any lingering
+ * event listeners from continuing to respond to mouse movements.
+ *
+ * @example
+ * // This function is typically called by the mouseup event listener
+ * // when the user releases the middle mouse button during panning
+ * window.addEventListener('mouseup', endPan)
+ *
+ * // After calling this function, the circuit board will no longer
+ * // respond to mouse movement for panning until startPan() is called again
+ */
 function endPan () {
   isPanning.value = false
   document.body.style.cursor = 'default'
@@ -123,34 +211,222 @@ function endPan () {
   window.removeEventListener('mouseup', endPan)
 }
 
+/**
+ * Handles the dragover event to update the ghost component position
+ *
+ * @param {DragEvent} event - The dragover event object containing mouse coordinates
+ * @returns {void}
+ *
+ * @description
+ * This function is called when a component is being dragged over the circuit board.
+ * It updates the position of the ghost component (visual preview) to follow the
+ * mouse cursor, providing real-time feedback to the user about where the component
+ * will be placed when dropped.
+ *
+ * The function delegates the actual position update logic to the circuit store's
+ * updateGhostComponentPosition method, which handles the coordinate calculations
+ * and ghost component state management.
+ *
+ * This function is typically bound to the dragover event on the circuit board
+ * element and works in conjunction with the drag-and-drop system to provide
+ * visual feedback during component placement.
+ *
+ * @example
+ * // This function is typically called by the dragover event listener
+ * // when dragging a component over the circuit board
+ * <div @dragover="onDragOver">
+ *
+ * // The ghost component will update its position to follow the mouse cursor
+ * // providing visual feedback for component placement
+ */
 function onDragOver (event) {
   circuit.updateGhostComponentPosition(event)
 }
 
+/**
+ * Handles the dragend event to clean up the ghost component
+ *
+ * @param {DragEvent} event - The dragend event object
+ * @returns {void}
+ *
+ * @description
+ * This function is called when a component drag operation ends, either by dropping
+ * the component or canceling the drag. It cleans up the ghost component state by
+ * setting it to null, which removes the visual preview component from the circuit board.
+ *
+ * The ghost component is a temporary visual element that shows where a component
+ * will be placed during drag operations. Once the drag ends, this preview is no
+ * longer needed and should be removed to prevent it from remaining visible on the board.
+ *
+ * This function is typically bound to the dragend event on the circuit board element
+ * and works in conjunction with the drag-and-drop system to ensure proper cleanup
+ * after component placement operations.
+ *
+ * @example
+ * // This function is typically called by the dragend event listener
+ * // when a component drag operation ends
+ * <div @dragend="onDragEnd">
+ *
+ * // After calling this function, the ghost component will be removed
+ * // and the circuit board will return to its normal state
+ */
 function onDragEnd () {
-  // Clear the ghost component if the drag is cancelled
   circuit.ghostComponent = null
 }
 
+/**
+ * Handles the drop event to add a new component to the circuit board
+ *
+ * @param {DragEvent} event - The drop event object
+ * @returns {void}
+ *
+ * @description
+ * This function is called when a component is dropped onto the circuit board
+ * during a drag-and-drop operation. It prevents the default browser drop behavior
+ * and triggers the addition of a new component to the circuit board at the drop location.
+ *
+ * The function works in conjunction with the drag-and-drop system to handle
+ * component placement. When a user drags a component from the component palette
+ * and drops it onto the circuit board, this function ensures the component is
+ * properly added to the board at the correct position.
+ *
+ * This function is typically bound to the drop event on the circuit board element
+ * and coordinates with the ghost component system to provide visual feedback
+ * during the drag operation.
+ *
+ * @example
+ * // This function is typically called by the drop event listener
+ * // when a component is dropped onto the circuit board
+ * <div @drop="onDrop">
+ *
+ * // After calling this function, a new component will be added
+ * // to the circuit board at the drop location
+ */
 function onDrop (event) {
   event.preventDefault()
   circuit.addComponent()
 }
 
+/**
+ * Handles mouse down events on circuit components
+ *
+ * @param {string} componentId - The unique identifier of the component that was clicked
+ * @param {MouseEvent} event - The mouse down event object
+ * @returns {void}
+ *
+ * @description
+ * This function is called when a user clicks on a component on the circuit board.
+ * It performs two main operations:
+ * 1. Selects the clicked component by calling circuit.selectComponent()
+ * 2. Initiates a move operation for the component by calling circuit.startMove()
+ *
+ * This function enables the interactive behavior of components on the circuit board,
+ * allowing users to select components and begin moving them by clicking and dragging.
+ * The function works in conjunction with the mouse move and mouse up event handlers
+ * to provide a complete drag-and-drop experience for component manipulation.
+ *
+ * This function is typically bound to the mousedown event on individual component
+ * elements and coordinates with the circuit store to manage component selection
+ * and movement states.
+ *
+ * @example
+ * // This function is typically called by the mousedown event listener
+ * // when a user clicks on a component
+ * <component @mousedown="onComponentMouseDown(component.id, $event)">
+ *
+ * // After calling this function, the component will be selected
+ * // and ready for movement if the user continues to drag
+ */
 function onComponentMouseDown (componentId, event) {
   circuit.selectComponent(componentId)
   circuit.startMove(componentId, event)
 }
 
+/**
+ * Converts a wire object into a string of coordinate points for SVG rendering
+ *
+ * @param {Object} wire - The wire object containing start, end, and waypoint coordinates
+ * @param {number} wire.x1 - The x-coordinate of the wire's starting point
+ * @param {number} wire.y1 - The y-coordinate of the wire's starting point
+ * @param {number} wire.x2 - The x-coordinate of the wire's ending point
+ * @param {number} wire.y2 - The y-coordinate of the wire's ending point
+ * @param {Array<Object>} wire.waypoints - Array of waypoint objects with x and y coordinates
+ * @returns {string} A space-separated string of coordinate pairs in "x,y" format
+ *
+ * @description
+ * This function takes a wire object and converts it into a string representation
+ * suitable for use in SVG polyline or polygon elements. It creates an ordered
+ * sequence of all points along the wire's path, including the start point,
+ * any intermediate waypoints, and the end point.
+ *
+ * The function performs the following operations:
+ * - Creates an array starting with the wire's start coordinates (x1, y1)
+ * - Spreads any waypoints into the middle of the array
+ * - Adds the wire's end coordinates (x2, y2) to complete the path
+ * - Converts each point object to a "x,y" string format
+ * - Joins all coordinate strings with spaces to create the final result
+ *
+ * This function is typically used when rendering wires on the circuit board
+ * to provide the points attribute for SVG elements that need to display
+ * the wire's complete path including any bends or waypoints.
+ *
+ * @example
+ * // Convert a simple straight wire
+ * const wire = { x1: 10, y1: 20, x2: 50, y2: 20, waypoints: [] }
+ * const points = getWirePoints(wire)
+ * // Returns: "10,20 50,20"
+ *
+ * // Convert a wire with waypoints
+ * const wireWithWaypoints = {
+ *   x1: 10, y1: 20,
+ *   x2: 100, y2: 80,
+ *   waypoints: [{ x: 30, y: 40 }, { x: 70, y: 60 }]
+ * }
+ * const points = getWirePoints(wireWithWaypoints)
+ * // Returns: "10,20 30,40 70,60 100,80"
+ */
 function getWirePoints (wire) {
   const points = [
     { x: wire.x1, y: wire.y1 },
     ...wire.waypoints,
     { x: wire.x2, y: wire.y2 }
   ]
+
   return points.map(p => `${p.x},${p.y}`).join(' ')
 }
 
+/**
+ * Handles mouse down events on wire elements
+ *
+ * @param {string} wireId - The unique identifier of the wire that was clicked
+ * @param {MouseEvent} event - The mouse event that triggered this function
+ * @returns {void}
+ *
+ * @description
+ * This function handles mouse interactions with wire elements on the circuit board.
+ * It provides two different behaviors depending on whether the Ctrl key is held
+ * during the click event.
+ *
+ * The function performs the following operations:
+ * - Selects the wire that was clicked by calling circuit.selectWire()
+ * - If the Ctrl key is pressed during the click, adds a waypoint to the selected wire
+ *   at the click location by calling circuit.addWaypointToSelectedWire()
+ *
+ * This function is typically called when a user clicks on a wire element in the
+ * circuit board interface. The wire selection allows for subsequent operations
+ * like deletion or modification, while the Ctrl+click behavior provides a quick
+ * way to add waypoints for wire routing.
+ *
+ * @example
+ * // Handle a regular click on a wire
+ * onWireMouseDown('wire-123', mouseEvent)
+ * // Wire is selected, no waypoint added
+ *
+ * // Handle a Ctrl+click on a wire
+ * const ctrlEvent = new MouseEvent('mousedown', { ctrlKey: true })
+ * onWireMouseDown('wire-123', ctrlEvent)
+ * // Wire is selected and a waypoint is added at the click location
+ */
 function onWireMouseDown (wireId, event) {
   circuit.selectWire(wireId)
   if (event.ctrlKey) {
@@ -158,13 +434,81 @@ function onWireMouseDown (wireId, event) {
   }
 }
 
+/**
+ * Handles mouse down events on wire waypoint elements
+ *
+ * @param {string} wireId - The unique identifier of the wire containing the waypoint
+ * @param {string} waypointId - The unique identifier of the waypoint that was clicked
+ * @param {MouseEvent} event - The mouse event that triggered this function
+ * @returns {void}
+ *
+ * @description
+ * This function initiates the waypoint movement interaction when a user clicks on
+ * a wire waypoint. It delegates the movement logic to the circuit store's
+ * startMoveWaypoint method, which handles the initial setup for dragging the waypoint.
+ *
+ * The function performs the following operations:
+ * - Calls circuit.startMoveWaypoint() with the wire ID, waypoint ID, and mouse event
+ * - This typically sets up the movingWaypointInfo state in the circuit store
+ * - Prepares the waypoint for dragging operations that will be handled by other
+ *   event listeners (mousemove, mouseup)
+ *
+ * This function is typically called when a user clicks on a waypoint circle in the
+ * wire layer of the circuit board. The waypoint movement allows users to adjust
+ * the routing of wires by repositioning intermediate points along the wire path.
+ *
+ * @example
+ * // Handle a click on a wire waypoint
+ * onWaypointMouseDown('wire-123', 'waypoint-456', mouseEvent)
+ * // Waypoint movement is initiated and ready for dragging
+ */
 function onWaypointMouseDown (wireId, waypointId, event) {
   circuit.startMoveWaypoint(wireId, waypointId, event)
 }
 
+/**
+ * Handles mouse movement events across the circuit board
+ *
+ * @param {MouseEvent} event - The mouse event containing current cursor position and state
+ * @returns {void}
+ *
+ * @description
+ * This function processes mouse movement events and delegates the appropriate actions
+ * based on the current interaction state of the circuit board. It acts as a central
+ * coordinator for various mouse-based interactions including waypoint movement,
+ * component movement, and wire creation.
+ *
+ * The function performs the following operations in order of priority:
+ * - Early return if panning is active to prevent interference with pan operations
+ * - Early return if a ghost component is being displayed (typically during drag-and-drop)
+ * - Updates waypoint movement if a waypoint is currently being dragged
+ * - Updates component movement if a component is currently being dragged
+ * - Updates wire creation if currently in wiring mode
+ *
+ * This function is called continuously during mouse movement and ensures that only
+ * one type of interaction is active at a time through its conditional logic.
+ *
+ * @example
+ * // Handle mouse movement during waypoint dragging
+ * // movingWaypointInfo is set in the circuit store
+ * onMouseMove(mouseEvent)
+ * // Waypoint position is updated based on mouse position
+ *
+ * // Handle mouse movement during component dragging
+ * // movingComponentInfo is set in the circuit store
+ * onMouseMove(mouseEvent)
+ * // Component position is updated based on mouse position
+ *
+ * // Handle mouse movement during wire creation
+ * // wiringInfo is set in the circuit store
+ * onMouseMove(mouseEvent)
+ * // Temporary wire preview is updated based on mouse position
+ */
 function onMouseMove (event) {
   if (isPanning.value) return
+
   if (circuit.ghostComponent) return
+
   if (circuit.movingWaypointInfo) {
     circuit.updateMoveWaypoint(event)
   } else if (circuit.movingComponentInfo) {
@@ -174,10 +518,49 @@ function onMouseMove (event) {
   }
 }
 
+/**
+ * Handles mouse up events and finalizes various circuit board interactions
+ *
+ * @param {MouseEvent} event - The mouse event containing target information and position
+ * @returns {void}
+ *
+ * @description
+ * This function processes mouse up events and completes the appropriate circuit board
+ * interactions based on the current state. It acts as the final step in various
+ * interaction workflows including wire creation, component movement, and waypoint
+ * movement.
+ *
+ * The function performs the following operations in order of priority:
+ * - Completes wire creation if currently in wiring mode by finding the target pin
+ *   and calling the circuit store's endWiring method
+ * - Finalizes component movement if a component is currently being dragged
+ * - Finalizes waypoint movement if a waypoint is currently being dragged
+ *
+ * This function ensures that all interactive operations are properly completed
+ * when the user releases the mouse button, maintaining the integrity of the
+ * circuit board state.
+ *
+ * @example
+ * // Complete wire creation when user releases mouse over a pin
+ * // wiringInfo is set in the circuit store
+ * onMouseUp(mouseEvent)
+ * // Wire is created if target is a valid pin, otherwise wiring is cancelled
+ *
+ * // Complete component movement when user releases mouse
+ * // movingComponentInfo is set in the circuit store
+ * onMouseUp(mouseEvent)
+ * // Component position is finalized and movement state is cleared
+ *
+ * // Complete waypoint movement when user releases mouse
+ * // movingWaypointInfo is set in the circuit store
+ * onMouseUp(mouseEvent)
+ * // Waypoint position is finalized and movement state is cleared
+ */
 function onMouseUp (event) {
   if (circuit.wiringInfo) {
     const endPinEl = event.target.closest('.component-pin')
     const endCircleEl = endPinEl ? endPinEl.querySelector('.pin-circle') : null
+
     circuit.endWiring(endCircleEl)
   } else if (circuit.movingComponentInfo) {
     circuit.endMove()
@@ -186,11 +569,49 @@ function onMouseUp (event) {
   }
 }
 
+/**
+ * Handles keyboard events for the circuit board
+ *
+ * @param {KeyboardEvent} event - The keyboard event containing key information and target
+ * @returns {void}
+ *
+ * @description
+ * This function processes keyboard events and performs appropriate actions based on
+ * the pressed key. It acts as the main keyboard event handler for the circuit board,
+ * providing keyboard shortcuts for common operations.
+ *
+ * The function performs the following operations:
+ * - Checks if the event target is an input field or textarea to avoid interfering
+ *   with text input operations
+ * - Handles Delete and Backspace keys to delete the currently selected component
+ *   or wire from the circuit board
+ *
+ * This function ensures that keyboard shortcuts work consistently across the
+ * circuit board while respecting text input areas and maintaining the integrity
+ * of the circuit board state.
+ *
+ * @example
+ * // Delete selected component when user presses Delete key
+ * // selectedComponentId is set in the circuit store
+ * handleKeyDown(keyboardEvent)
+ * // Selected component is removed from the circuit board
+ *
+ * // Delete selected component when user presses Backspace key
+ * // selectedComponentId is set in the circuit store
+ * handleKeyDown(keyboardEvent)
+ * // Selected component is removed from the circuit board
+ *
+ * // Ignore keyboard events when user is typing in input fields
+ * handleKeyDown(keyboardEvent)
+ * // No action is taken, allowing normal text input behavior
+ */
 function handleKeyDown (event) {
   const targetTagName = event.target.tagName
+
   if (targetTagName === 'INPUT' || targetTagName === 'TEXTAREA') {
     return
   }
+
   if (event.key === 'Delete' || event.key === 'Backspace') {
     circuit.deleteSelection()
   }
@@ -204,6 +625,7 @@ onMounted(() => {
   // Center the view
   if (circuitBoardWrapper.value) {
     const wrapper = circuitBoardWrapper.value
+
     wrapper.scrollLeft = (wrapper.scrollWidth - wrapper.clientWidth) / 2
     wrapper.scrollTop = (wrapper.scrollHeight - wrapper.clientHeight) / 2
   }

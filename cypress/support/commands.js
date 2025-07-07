@@ -26,6 +26,7 @@
 
 Cypress.Commands.add('dragTo', { prevSubject: 'element' }, (subject, target, options) => {
   const dataTransfer = new DataTransfer()
+
   cy.wrap(subject).trigger('dragstart', { dataTransfer })
   cy.get(target).trigger('dragover', { clientX: options.x, clientY: options.y }).trigger('drop')
 })

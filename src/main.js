@@ -37,5 +37,4 @@ app.use(Toast, {
 
 app.component('font-awesome-icon', FontAwesomeIcon)
 
-// We need a div with id="app" in index.html for this to work
 app.mount('#app')

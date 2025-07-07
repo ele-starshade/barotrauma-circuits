@@ -11,7 +11,7 @@
     "test:unit": "dotenvx run -f .env.test -- vitest",
     "test:e2e": "dotenvx run -f .env.test -- cypress run",
     "e2e": "cypress open",
-    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path .gitignore",
+    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --ignore-path .gitignore",
     "cov:combine": "nyc merge --dir coverage --include coverage/** combined-coverage/coverage.json && npm run cov:report",
     "cov:report": "nyc report -e .js -e .vue --include src/**/*.{js,ts,vue} --exclude src/components/icons/**/*.{js,ts,vue} --reporter=html --reporter=text -t combined-coverage --report-dir=combined-coverage",
     "test:all": "rm -rf ./.nyc_output && rm -rf ./coverage && rm -rf ./combined-coverage && npm run test && npm run test:e2e && npm run cov:combine"

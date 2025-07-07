@@ -98,6 +98,7 @@ const effectiveOutput = computed({
     if (isOutputOverridden.value) {
       return props.componentData.inputs.SET_OUTPUT
     }
+
     return localSettings.output
   },
   set: (newValue) => {
