@@ -36,6 +36,7 @@ import MemoryComponent from '../components/circuit/MemoryComponent.vue'
 import ModuloComponent from '../components/circuit/ModuloComponent.vue'
 import NotComponent from '../components/circuit/NotComponent.vue'
 import OrComponent from '../components/circuit/OrComponent.vue'
+import OscillatorComponent from '../components/circuit/OscillatorComponent.vue'
 
 const componentMap = {
   Adder: AdderComponent,
@@ -67,7 +68,8 @@ const componentMap = {
   Memory: MemoryComponent,
   Modulo: ModuloComponent,
   Not: NotComponent,
-  Or: OrComponent
+  Or: OrComponent,
+  Oscillator: OscillatorComponent
 }
 
 const toast = useToast()
@@ -398,6 +400,10 @@ export const useCircuitStore = defineStore('circuit', {
 
       if (newComponent.name === 'Or') {
         // Or component has no specific state to initialize here
+      }
+
+      if (newComponent.name === 'Oscillator') {
+        newComponent.phase = 0
       }
 
       this.boardComponents.push(newComponent)
@@ -1342,6 +1348,7 @@ export const useCircuitStore = defineStore('circuit', {
             case 'Modulo': newValues = this._processModuloTick(component); break
             case 'Not': newValues = this._processNotTick(component); break
             case 'Or': newValues = this._processOrTick(component); break
+            case 'Oscillator': newValues = this._processOscillatorTick(component); break
           }
 
           if (newValues) {
@@ -2802,6 +2809,52 @@ export const useCircuitStore = defineStore('circuit', {
       } else {
         return { SIGNAL_OUT: falseOutputValue }
       }
+    },
+
+    /**
+     * Processes a single tick for an Oscillator component in the circuit simulation.
+     *
+     * @param {Object} component - The Oscillator component to process.
+     * @returns {Object|undefined} An object with SIGNAL_OUT.
+     */
+    _processOscillatorTick (component) {
+      const { inputs, settings } = component
+      const frequency = inputs?.SET_FREQUENCY ?? settings.frequency
+      const outputType = inputs?.SET_OUTPUTTYPE ?? settings.outputType
+
+      // Advance phase
+      const phaseIncrement = (parseFloat(frequency) || 0) * (this.tickInterval / 1000)
+      const oldPhase = component.phase
+
+      component.phase = (component.phase + phaseIncrement) % 1.0
+
+      let output = 0
+
+      switch (parseInt(outputType)) {
+        case 0: // Pulse
+          // Output 1 if the phase has wrapped around
+          output = (oldPhase > component.phase) ? 1 : 0
+          break
+        case 1: // Sawtooth
+          output = component.phase
+          break
+        case 2: // Sine
+          output = Math.sin(component.phase * 2 * Math.PI)
+          break
+        case 3: // Square
+          output = (component.phase < 0.5) ? 1 : 0
+          break
+        case 4: // Triangle
+          if (component.phase < 0.5) {
+            output = component.phase * 4 - 1
+          } else {
+            output = -component.phase * 4 + 3
+          }
+
+          break
+      }
+
+      return { SIGNAL_OUT: output }
     },
 
     // --- Import/Export Actions ---
