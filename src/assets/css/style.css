@@ -320,6 +320,11 @@ body {
 
 .component.graphical .component-name {
   font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+  width: 65px;
 }
 
 .wire-label-container {
