@@ -17,6 +17,7 @@ import XorComponent from '../components/circuit/XorComponent.vue'
 import SignalCheckComponent from '../components/circuit/SignalCheckComponent.vue'
 import GreaterComponent from '../components/circuit/GreaterComponent.vue'
 import LightComponent from '../components/circuit/tools/LightComponent.vue'
+import AbsComponent from '../components/circuit/AbsComponent.vue'
 
 const componentMap = {
   Adder: AdderComponent,
@@ -30,7 +31,8 @@ const componentMap = {
   Xor: XorComponent,
   SignalCheck: SignalCheckComponent,
   Greater: GreaterComponent,
-  Light: LightComponent
+  Light: LightComponent,
+  Abs: AbsComponent
 }
 
 const toast = useToast()
@@ -285,6 +287,10 @@ export const useCircuitStore = defineStore('circuit', {
 
       if (['Adder', 'Subtract', 'Multiply', 'Divide', 'And', 'Greater'].includes(newComponent.name)) {
         newComponent.lastSignalTimestamps = {}
+      }
+
+      if (newComponent.name === 'Abs') {
+        // Abs component has no specific state to initialize here
       }
 
       this.boardComponents.push(newComponent)
@@ -1198,7 +1204,7 @@ export const useCircuitStore = defineStore('circuit', {
 
         // First, determine the output of each component based on its current inputs.
         this.boardComponents.forEach(component => {
-          const outputPin = (component.name === 'Adder' || component.name === 'And' || component.name === 'Subtract' || component.name === 'Multiply' || component.name === 'Divide' || component.name === 'Xor' || component.name === 'SignalCheck' || component.name === 'Greater') ? 'SIGNAL_OUT' : 'VALUE_OUT'
+          const outputPin = (component.name === 'Adder' || component.name === 'And' || component.name === 'Subtract' || component.name === 'Multiply' || component.name === 'Divide' || component.name === 'Xor' || component.name === 'SignalCheck' || component.name === 'Greater' || component.name === 'Abs') ? 'SIGNAL_OUT' : 'VALUE_OUT'
           const key = `${component.id}:${outputPin}`
           const currentValue = outputValues.get(key)
           let newValue
@@ -1214,6 +1220,7 @@ export const useCircuitStore = defineStore('circuit', {
             case 'Xor': newValue = this._processXorTick(component); break
             case 'SignalCheck': newValue = this._processSignalCheckTick(component); break
             case 'Greater': newValue = this._processGreaterTick(component); break
+            case 'Abs': newValue = this._processAbsTick(component); break
           }
 
           if (newValue !== undefined && currentValue !== newValue) {
@@ -2044,6 +2051,26 @@ export const useCircuitStore = defineStore('circuit', {
       }
 
       return newValue
+    },
+
+    /**
+     * Processes a single tick for an Abs component in the circuit simulation
+     *
+     * Calculates the absolute value of an input signal.
+     *
+     * @param {Object} component - The Abs component to process
+     * @param {Object} component.inputs - The input signal values
+     * @param {number|string} component.inputs.SIGNAL_IN - The input signal
+     * @returns {number|undefined} The absolute value of the input, or undefined if the input is not valid
+     */
+    _processAbsTick (component) {
+      const signalIn = component.inputs?.SIGNAL_IN
+
+      if (signalIn !== undefined) {
+        const num = parseFloat(signalIn) || 0
+
+        return Math.abs(num)
+      }
     },
 
     // --- Import/Export Actions ---

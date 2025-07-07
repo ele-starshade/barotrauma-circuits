@@ -60,6 +60,7 @@ const XorComponent = markRaw(defineAsyncComponent(() => import('./circuit/XorCom
 const SignalCheckComponent = markRaw(defineAsyncComponent(() => import('./circuit/SignalCheckComponent.vue')))
 const GreaterComponent = markRaw(defineAsyncComponent(() => import('./circuit/GreaterComponent.vue')))
 const LightComponent = markRaw(defineAsyncComponent(() => import('./circuit/tools/LightComponent.vue')))
+const AbsComponent = markRaw(defineAsyncComponent(() => import('./circuit/AbsComponent.vue')))
 
 const circuit = useCircuitStore()
 
@@ -202,6 +203,11 @@ const trayComponents = shallowRef([
       isOn: false
     },
     isTool: true
+  },
+  {
+    name: 'Abs',
+    is: AbsComponent,
+    value: ''
   }
 ])
 
