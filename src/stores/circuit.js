@@ -38,6 +38,7 @@ import NotComponent from '../components/circuit/NotComponent.vue'
 import OrComponent from '../components/circuit/OrComponent.vue'
 import OscillatorComponent from '../components/circuit/OscillatorComponent.vue'
 import OutputSelectorComponent from '../components/circuit/OutputSelectorComponent.vue'
+import RegExComponent from '../components/circuit/RegExComponent.vue'
 
 const componentMap = {
   Adder: AdderComponent,
@@ -71,7 +72,8 @@ const componentMap = {
   Not: NotComponent,
   Or: OrComponent,
   Oscillator: OscillatorComponent,
-  OutputSelector: OutputSelectorComponent
+  OutputSelector: OutputSelectorComponent,
+  RegEx: RegExComponent
 }
 
 const toast = useToast()
@@ -413,6 +415,10 @@ export const useCircuitStore = defineStore('circuit', {
       if (newComponent.name === 'OutputSelector') {
         newComponent.selectedConnection = newComponent.settings.selectedConnection
         newComponent.lastMoveSignal = 0
+      }
+
+      if (newComponent.name === 'RegEx') {
+        newComponent.value = newComponent.settings.falseOutput
       }
 
       this.boardComponents.push(newComponent)
@@ -1359,6 +1365,7 @@ export const useCircuitStore = defineStore('circuit', {
             case 'Or': newValues = this._processOrTick(component); break
             case 'Oscillator': newValues = this._processOscillatorTick(component); break
             case 'OutputSelector': newValues = this._processOutputSelectorTick(component); break
+            case 'RegEx': newValues = this._processRegExTick(component); break
             case 'Display': this._processDisplayTick(component); break
           }
 
@@ -2983,6 +2990,63 @@ export const useCircuitStore = defineStore('circuit', {
       }
 
       return outputs
+    },
+
+    /**
+     * Processes a single tick for a RegEx component.
+     * @param {Object} component The component to process.
+     * @returns {Object|undefined} An object with SIGNAL_OUT.
+     */
+    _processRegExTick (component) {
+      const { inputs, settings } = component
+      const signalIn = inputs?.SIGNAL_IN
+      const setOutput = inputs?.SET_OUTPUT
+
+      let outputSignal = settings.falseOutput
+
+      if (signalIn !== undefined) {
+        let regex
+
+        try {
+          regex = new RegExp(settings.expression)
+        } catch (e) {
+          // Invalid regex, treat as no match
+          component.value = settings.falseOutput
+
+          return { SIGNAL_OUT: settings.falseOutput }
+        }
+
+        const match = String(signalIn).match(regex)
+
+        if (match) {
+          if (settings.useCaptureGroup) {
+            const captureGroups = match.groups ? Object.values(match.groups) : []
+            const firstCapture = captureGroups.length > 0 ? captureGroups[0] : undefined
+
+            if (firstCapture !== undefined && (firstCapture !== '' || settings.outputEmptyCaptureGroup)) {
+              outputSignal = firstCapture
+            } else {
+              outputSignal = settings.falseOutput
+            }
+          } else {
+            outputSignal = setOutput !== undefined ? setOutput : settings.output
+          }
+        } else {
+          outputSignal = settings.falseOutput
+        }
+      } else if (settings.continuousOutput) {
+        outputSignal = component.value
+      } else {
+        outputSignal = settings.falseOutput
+      }
+
+      if (settings.maxOutputLength > -1) {
+        outputSignal = String(outputSignal).substring(0, settings.maxOutputLength)
+      }
+
+      component.value = outputSignal
+
+      return { SIGNAL_OUT: outputSignal }
     },
 
     // --- Import/Export Actions ---

@@ -80,6 +80,7 @@ const NotComponent = markRaw(defineAsyncComponent(() => import('./circuit/NotCom
 const OrComponent = markRaw(defineAsyncComponent(() => import('./circuit/OrComponent.vue')))
 const OscillatorComponent = markRaw(defineAsyncComponent(() => import('./circuit/OscillatorComponent.vue')))
 const OutputSelectorComponent = markRaw(defineAsyncComponent(() => import('./circuit/OutputSelectorComponent.vue')))
+const RegExComponent = markRaw(defineAsyncComponent(() => import('./circuit/RegExComponent.vue')))
 
 const circuit = useCircuitStore()
 
@@ -378,6 +379,19 @@ const trayComponents = shallowRef([
       selectedConnection: 0,
       wrapAround: true,
       skipEmptyConnections: true
+    }
+  },
+  {
+    name: 'RegEx',
+    is: RegExComponent,
+    settings: {
+      expression: '',
+      output: '1',
+      falseOutput: '0',
+      maxOutputLength: 200,
+      useCaptureGroup: false,
+      outputEmptyCaptureGroup: false,
+      continuousOutput: true
     }
   }
 ])
