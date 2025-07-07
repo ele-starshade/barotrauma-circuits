@@ -1562,34 +1562,6 @@ export const useCircuitStore = defineStore('circuit', {
 
       // After calculating all potential outputs, update the state
       this.componentOutputs = new Map(outputValues)
-
-      // Second pass for WiFi components to receive signals
-      this.boardComponents.forEach(component => {
-        if (component.name === 'WiFi') {
-          const getInputValue = (pinName) => { // Redefine helper for this scope
-            const wire = this.wires.find(w => w.to.componentId === component.id && w.to.pinName === pinName)
-
-            if (!wire) return undefined
-
-            const fromComponentOutputs = this.componentOutputs[wire.from.componentId]
-
-            return fromComponentOutputs ? fromComponentOutputs[wire.from.pinName] : undefined
-          }
-
-          const channelOverride = getInputValue('SET_CHANNEL')
-          const channel = channelOverride !== undefined ? channelOverride : component.settings.channel
-          // Read from the channels of the PREVIOUS tick
-          const signalOut = this.wifiChannels[channel]
-
-          if (signalOut !== undefined) {
-            if (!this.componentOutputs[component.id]) {
-              this.componentOutputs[component.id] = {}
-            }
-
-            this.componentOutputs[component.id].SIGNAL_OUT = signalOut
-          }
-        }
-      })
     },
 
     /**

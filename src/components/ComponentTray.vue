@@ -431,7 +431,10 @@ const trayComponents = shallowRef([
   },
   {
     name: 'WiFi',
-    is: WiFiComponent
+    is: WiFiComponent,
+    settings: {
+      channel: 0
+    }
   }
 ])
 
