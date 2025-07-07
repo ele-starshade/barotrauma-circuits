@@ -24,6 +24,7 @@ import AsinComponent from '../components/circuit/AsinComponent.vue'
 import AtanComponent from '../components/circuit/AtanComponent.vue'
 import CeilComponent from '../components/circuit/CeilComponent.vue'
 import ColorComponent from '../components/circuit/ColorComponent.vue'
+import ConcatenationComponent from '../components/circuit/ConcatenationComponent.vue'
 
 const componentMap = {
   Adder: AdderComponent,
@@ -43,7 +44,8 @@ const componentMap = {
   Asin: AsinComponent,
   Atan: AtanComponent,
   Ceil: CeilComponent,
-  Color: ColorComponent
+  Color: ColorComponent,
+  Concatenation: ConcatenationComponent
 }
 
 const toast = useToast()
@@ -321,6 +323,10 @@ export const useCircuitStore = defineStore('circuit', {
       }
 
       if (newComponent.name === 'Color') {
+        newComponent.lastSignalTimestamps = {}
+      }
+
+      if (newComponent.name === 'Concatenation') {
         newComponent.lastSignalTimestamps = {}
       }
 
@@ -1235,7 +1241,7 @@ export const useCircuitStore = defineStore('circuit', {
 
         // First, determine the output of each component based on its current inputs.
         this.boardComponents.forEach(component => {
-          const outputPin = (component.name === 'Adder' || component.name === 'And' || component.name === 'Subtract' || component.name === 'Multiply' || component.name === 'Divide' || component.name === 'Xor' || component.name === 'SignalCheck' || component.name === 'Greater' || component.name === 'Abs' || component.name === 'Acos' || component.name === 'Asin' || component.name === 'Atan' || component.name === 'Ceil' || component.name === 'Color') ? 'SIGNAL_OUT' : 'VALUE_OUT'
+          const outputPin = (component.name === 'Adder' || component.name === 'And' || component.name === 'Subtract' || component.name === 'Multiply' || component.name === 'Divide' || component.name === 'Xor' || component.name === 'SignalCheck' || component.name === 'Greater' || component.name === 'Abs' || component.name === 'Acos' || component.name === 'Asin' || component.name === 'Atan' || component.name === 'Ceil' || component.name === 'Color' || component.name === 'Concatenation') ? 'SIGNAL_OUT' : 'VALUE_OUT'
           const key = `${component.id}:${outputPin}`
           const currentValue = outputValues.get(key)
           let newValue
@@ -1257,6 +1263,7 @@ export const useCircuitStore = defineStore('circuit', {
             case 'Atan': newValue = this._processAtanTick(component); break
             case 'Ceil': newValue = this._processCeilTick(component); break
             case 'Color': newValue = this._processColorTick(component); break
+            case 'Concatenation': newValue = this._processConcatenationTick(component); break
           }
 
           if (newValue !== undefined && currentValue !== newValue) {
@@ -1347,7 +1354,7 @@ export const useCircuitStore = defineStore('circuit', {
                 changedInLoop = true
               }
 
-              if (toComponent.name === 'Adder' || toComponent.name === 'And' || toComponent.name === 'Subtract' || toComponent.name === 'Multiply' || toComponent.name === 'Divide' || toComponent.name === 'Xor' || toComponent.name === 'Greater') {
+              if (toComponent.name === 'Adder' || toComponent.name === 'And' || toComponent.name === 'Subtract' || toComponent.name === 'Multiply' || toComponent.name === 'Divide' || toComponent.name === 'Xor' || toComponent.name === 'Greater' || toComponent.name === 'Concatenation') {
                 if (!toComponent.lastSignalTimestamps) toComponent.lastSignalTimestamps = {}
 
                 if ((toComponent.name === 'And' || toComponent.name === 'Greater' || toComponent.name === 'Xor') && wire.toPin === 'SET_OUTPUT') {
@@ -2306,6 +2313,34 @@ export const useCircuitStore = defineStore('circuit', {
       }
 
       return `${r},${g},${b},${a}`
+    },
+
+    /**
+     * Processes a single tick for a Concatenation component in the circuit simulation.
+     *
+     * Joins two input signals together with an optional separator.
+     *
+     * @param {Object} component - The Concatenation component to process.
+     * @returns {string|undefined} The concatenated string, or undefined.
+     */
+    _processConcatenationTick (component) {
+      const { lastSignalTimestamps, settings, inputs } = component
+      const in1 = inputs?.SIGNAL_IN_1
+      const in2 = inputs?.SIGNAL_IN_2
+      const in1Timestamp = lastSignalTimestamps?.SIGNAL_IN_1
+      const in2Timestamp = lastSignalTimestamps?.SIGNAL_IN_2
+
+      if (in1 !== undefined && in2 !== undefined && in1Timestamp && in2Timestamp) {
+        const timeDiff = Math.abs(in1Timestamp - in2Timestamp)
+
+        if (settings.timeframe === 0.0 || timeDiff <= settings.timeframe) {
+          const s1 = String(in1 ?? '')
+          const s2 = String(in2 ?? '')
+          const result = s1 + settings.separator + s2
+
+          return result.substring(0, settings.maxOutputLength)
+        }
+      }
     },
 
     // --- Import/Export Actions ---
