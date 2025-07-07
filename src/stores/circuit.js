@@ -40,6 +40,7 @@ import OscillatorComponent from '../components/circuit/OscillatorComponent.vue'
 import OutputSelectorComponent from '../components/circuit/OutputSelectorComponent.vue'
 import RegExComponent from '../components/circuit/RegExComponent.vue'
 import RelayComponent from '../components/circuit/RelayComponent.vue'
+import RoundComponent from '../components/circuit/RoundComponent.vue'
 
 const componentMap = {
   Adder: AdderComponent,
@@ -75,7 +76,8 @@ const componentMap = {
   Oscillator: OscillatorComponent,
   OutputSelector: OutputSelectorComponent,
   RegEx: RegExComponent,
-  Relay: RelayComponent
+  Relay: RelayComponent,
+  Round: RoundComponent
 }
 
 const toast = useToast()
@@ -426,6 +428,10 @@ export const useCircuitStore = defineStore('circuit', {
       if (newComponent.name === 'Relay') {
         newComponent.isOn = newComponent.settings.isOn
         newComponent.lastToggleSignal = 0
+      }
+
+      if (newComponent.name === 'Round') {
+        // Round component has no specific state to initialize here
       }
 
       this.boardComponents.push(newComponent)
@@ -1374,6 +1380,7 @@ export const useCircuitStore = defineStore('circuit', {
             case 'OutputSelector': newValues = this._processOutputSelectorTick(component); break
             case 'RegEx': newValues = this._processRegExTick(component); break
             case 'Relay': newValues = this._processRelayTick(component); break
+            case 'Round': newValues = this._processRoundTick(component); break
             case 'Display': this._processDisplayTick(component); break
           }
 
@@ -3097,6 +3104,25 @@ export const useCircuitStore = defineStore('circuit', {
         SIGNAL_OUT_1: signalOut1,
         SIGNAL_OUT_2: signalOut2
       }
+    },
+
+    /**
+     * Processes a single tick for a Round component.
+     * @param {Object} component The component to process.
+     * @returns {Object|undefined} An object with SIGNAL_OUT.
+     */
+    _processRoundTick (component) {
+      const signalIn = component.inputs?.SIGNAL_IN
+
+      if (signalIn !== undefined) {
+        const num = parseFloat(signalIn)
+
+        if (!isNaN(num)) {
+          return { SIGNAL_OUT: Math.round(num) }
+        }
+      }
+
+      return { SIGNAL_OUT: 0 }
     },
 
     // --- Import/Export Actions ---
