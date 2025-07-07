@@ -74,6 +74,7 @@ const FactorialComponent = markRaw(defineAsyncComponent(() => import('./circuit/
 const EqualsComponent = markRaw(defineAsyncComponent(() => import('./circuit/EqualsComponent.vue')))
 const FloorComponent = markRaw(defineAsyncComponent(() => import('./circuit/FloorComponent.vue')))
 const InputSelectorComponent = markRaw(defineAsyncComponent(() => import('./circuit/InputSelectorComponent.vue')))
+const MemoryComponent = markRaw(defineAsyncComponent(() => import('./circuit/MemoryComponent.vue')))
 
 const circuit = useCircuitStore()
 
@@ -322,6 +323,15 @@ const trayComponents = shallowRef([
       selectedConnection: 0,
       wrapAround: true,
       skipEmptyConnections: true
+    }
+  },
+  {
+    name: 'Memory',
+    is: MemoryComponent,
+    settings: {
+      maxValueLength: 200,
+      value: '',
+      writeable: true
     }
   }
 ])

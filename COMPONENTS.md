@@ -2,7 +2,7 @@
 
 This file tracks the implementation status of various components for the circuit simulator.
 
-**Completion Status: 22/35 (62.86%)**
+**Completion Status: 23/35 (65.71%)**
 
 ## Component Checklist
 
@@ -24,7 +24,7 @@ This file tracks the implementation status of various components for the circuit
 - [x] Floor
 - [x] Greater
 - [x] Input Selector
-- [ ] Memory
+- [x] Memory
 - [ ] Modulo
 - [x] Multiply
 - [ ] Not

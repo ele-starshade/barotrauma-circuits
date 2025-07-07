@@ -32,6 +32,7 @@ import FactorialComponent from '../components/circuit/FactorialComponent.vue'
 import EqualsComponent from '../components/circuit/EqualsComponent.vue'
 import FloorComponent from '../components/circuit/FloorComponent.vue'
 import InputSelectorComponent from '../components/circuit/InputSelectorComponent.vue'
+import MemoryComponent from '../components/circuit/MemoryComponent.vue'
 
 const componentMap = {
   Adder: AdderComponent,
@@ -59,7 +60,8 @@ const componentMap = {
   Factorial: FactorialComponent,
   Equals: EqualsComponent,
   Floor: FloorComponent,
-  InputSelector: InputSelectorComponent
+  InputSelector: InputSelectorComponent,
+  Memory: MemoryComponent
 }
 
 const toast = useToast()
@@ -374,6 +376,10 @@ export const useCircuitStore = defineStore('circuit', {
       if (newComponent.name === 'InputSelector') {
         newComponent.lastSignalTimestamps = {}
         newComponent.lastMoveSignal = 0
+      }
+
+      if (newComponent.name === 'Memory') {
+        newComponent.value = newComponent.settings.value
       }
 
       this.boardComponents.push(newComponent)
@@ -1314,6 +1320,7 @@ export const useCircuitStore = defineStore('circuit', {
             case 'Factorial': newValues = this._processFactorialTick(component); break
             case 'Equals': newValues = this._processEqualsTick(component); break
             case 'InputSelector': newValues = this._processInputSelectorTick(component); break
+            case 'Memory': newValues = this._processMemoryTick(component); break
           }
 
           if (newValues) {
@@ -2663,6 +2670,31 @@ export const useCircuitStore = defineStore('circuit', {
         SIGNAL_OUT: signalOut,
         SELECTED_INPUT_OUT: selectedConnection
       }
+    },
+
+    /**
+     * Processes a single tick for a Memory component in the circuit simulation.
+     *
+     * Stores a value and outputs it.
+     *
+     * @param {Object} component - The Memory component to process.
+     * @returns {Object|undefined} An object with SIGNAL_OUT.
+     */
+    _processMemoryTick (component) {
+      const { inputs, settings } = component
+      const signalIn = inputs?.SIGNAL_IN
+      const lockState = inputs?.LOCK_STATE
+
+      // eslint-disable-next-line eqeqeq
+      const isLocked = lockState == '1' || lockState === true
+
+      if (settings.writeable && !isLocked && signalIn !== undefined) {
+        component.value = String(signalIn).substring(0, settings.maxValueLength)
+        // Also update settings to persist the value in the config panel
+        settings.value = component.value
+      }
+
+      return { SIGNAL_OUT: component.value }
     },
 
     // --- Import/Export Actions ---
