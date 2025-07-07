@@ -221,7 +221,7 @@ onUnmounted(() => {
 <style>
 #circuit-board-wrapper {
   width: 100vw;
-  height: calc(100vh - 175px - 50px);
+  height: calc(100vh - 150px - 50px);
   overflow: auto;
   cursor: grab;
 }
