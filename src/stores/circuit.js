@@ -28,6 +28,7 @@ import ConcatenationComponent from '../components/circuit/ConcatenationComponent
 import CosComponent from '../components/circuit/CosComponent.vue'
 import DelayComponent from '../components/circuit/DelayComponent.vue'
 import ExponentiationComponent from '../components/circuit/ExponentiationComponent.vue'
+import FactorialComponent from '../components/circuit/FactorialComponent.vue'
 
 const componentMap = {
   Adder: AdderComponent,
@@ -51,7 +52,8 @@ const componentMap = {
   Concatenation: ConcatenationComponent,
   Cos: CosComponent,
   Delay: DelayComponent,
-  Exponentiation: ExponentiationComponent
+  Exponentiation: ExponentiationComponent,
+  Factorial: FactorialComponent
 }
 
 const toast = useToast()
@@ -349,6 +351,10 @@ export const useCircuitStore = defineStore('circuit', {
 
       if (newComponent.name === 'Exponentiation') {
         newComponent.lastSignalTimestamps = {}
+      }
+
+      if (newComponent.name === 'Factorial') {
+        // Factorial component has no specific state to initialize here
       }
 
       this.boardComponents.push(newComponent)
@@ -1262,7 +1268,7 @@ export const useCircuitStore = defineStore('circuit', {
 
         // First, determine the output of each component based on its current inputs.
         this.boardComponents.forEach(component => {
-          const outputPin = (component.name === 'Adder' || component.name === 'And' || component.name === 'Subtract' || component.name === 'Multiply' || component.name === 'Divide' || component.name === 'Xor' || component.name === 'SignalCheck' || component.name === 'Greater' || component.name === 'Abs' || component.name === 'Acos' || component.name === 'Asin' || component.name === 'Atan' || component.name === 'Ceil' || component.name === 'Color' || component.name === 'Concatenation' || component.name === 'Cos' || component.name === 'Delay' || component.name === 'Exponentiation') ? 'SIGNAL_OUT' : 'VALUE_OUT'
+          const outputPin = (component.name === 'Adder' || component.name === 'And' || component.name === 'Subtract' || component.name === 'Multiply' || component.name === 'Divide' || component.name === 'Xor' || component.name === 'SignalCheck' || component.name === 'Greater' || component.name === 'Abs' || component.name === 'Acos' || component.name === 'Asin' || component.name === 'Atan' || component.name === 'Ceil' || component.name === 'Color' || component.name === 'Concatenation' || component.name === 'Cos' || component.name === 'Delay' || component.name === 'Exponentiation' || component.name === 'Factorial') ? 'SIGNAL_OUT' : 'VALUE_OUT'
           const key = `${component.id}:${outputPin}`
           const currentValue = outputValues.get(key)
           let newValue
@@ -1288,6 +1294,7 @@ export const useCircuitStore = defineStore('circuit', {
             case 'Cos': newValue = this._processCosTick(component); break
             case 'Delay': newValue = this._processDelayTick(component); break
             case 'Exponentiation': newValue = this._processExponentiationTick(component); break
+            case 'Factorial': newValue = this._processFactorialTick(component); break
           }
 
           if (newValue !== undefined && currentValue !== newValue) {
@@ -2455,6 +2462,40 @@ export const useCircuitStore = defineStore('circuit', {
         const numExponent = parseFloat(exponent) || 0
 
         return Math.pow(numBase, numExponent)
+      }
+    },
+
+    /**
+     * Processes a single tick for a Factorial component in the circuit simulation.
+     *
+     * Outputs the factorial of the input.
+     *
+     * @param {Object} component - The Factorial component to process.
+     * @returns {number|undefined} The result of the factorial, or undefined.
+     */
+    _processFactorialTick (component) {
+      const signalIn = component.inputs?.SIGNAL_IN
+
+      if (signalIn !== undefined) {
+        const n = parseInt(signalIn, 10)
+
+        // Factorial is only defined for non-negative integers.
+        // Let's also set a reasonable limit to prevent performance issues.
+        if (isNaN(n) || n < 0 || n > 20) {
+          return 0
+        }
+
+        if (n === 0) {
+          return 1
+        }
+
+        let result = 1
+
+        for (let i = 2; i <= n; i++) {
+          result *= i
+        }
+
+        return result
       }
     },
 
