@@ -19,6 +19,7 @@ import GreaterComponent from '../components/circuit/GreaterComponent.vue'
 import LightComponent from '../components/circuit/tools/LightComponent.vue'
 import AbsComponent from '../components/circuit/AbsComponent.vue'
 import AcosComponent from '../components/circuit/AcosComponent.vue'
+import AsinComponent from '../components/circuit/AsinComponent.vue'
 
 const componentMap = {
   Adder: AdderComponent,
@@ -34,7 +35,8 @@ const componentMap = {
   Greater: GreaterComponent,
   Light: LightComponent,
   Abs: AbsComponent,
-  Acos: AcosComponent
+  Acos: AcosComponent,
+  Asin: AsinComponent
 }
 
 const toast = useToast()
@@ -297,6 +299,10 @@ export const useCircuitStore = defineStore('circuit', {
 
       if (newComponent.name === 'Acos') {
         // Acos component has no specific state to initialize here
+      }
+
+      if (newComponent.name === 'Asin') {
+        // Asin component has no specific state to initialize here
       }
 
       this.boardComponents.push(newComponent)
@@ -1210,7 +1216,7 @@ export const useCircuitStore = defineStore('circuit', {
 
         // First, determine the output of each component based on its current inputs.
         this.boardComponents.forEach(component => {
-          const outputPin = (component.name === 'Adder' || component.name === 'And' || component.name === 'Subtract' || component.name === 'Multiply' || component.name === 'Divide' || component.name === 'Xor' || component.name === 'SignalCheck' || component.name === 'Greater' || component.name === 'Abs' || component.name === 'Acos') ? 'SIGNAL_OUT' : 'VALUE_OUT'
+          const outputPin = (component.name === 'Adder' || component.name === 'And' || component.name === 'Subtract' || component.name === 'Multiply' || component.name === 'Divide' || component.name === 'Xor' || component.name === 'SignalCheck' || component.name === 'Greater' || component.name === 'Abs' || component.name === 'Acos' || component.name === 'Asin') ? 'SIGNAL_OUT' : 'VALUE_OUT'
           const key = `${component.id}:${outputPin}`
           const currentValue = outputValues.get(key)
           let newValue
@@ -1228,6 +1234,7 @@ export const useCircuitStore = defineStore('circuit', {
             case 'Greater': newValue = this._processGreaterTick(component); break
             case 'Abs': newValue = this._processAbsTick(component); break
             case 'Acos': newValue = this._processAcosTick(component); break
+            case 'Asin': newValue = this._processAsinTick(component); break
           }
 
           if (newValue !== undefined && currentValue !== newValue) {
@@ -2130,6 +2137,38 @@ export const useCircuitStore = defineStore('circuit', {
         num = Math.max(-1, Math.min(1, num))
 
         let angle = Math.acos(num)
+
+        if (!component.settings.useRadians) {
+          angle = angle * (180 / Math.PI)
+        }
+
+        return angle
+      }
+    },
+
+    /**
+     * Processes a single tick for an Asin component in the circuit simulation
+     *
+     * The Asin Component is an electrical component that performs the inverse sine
+     * function; sin-1(x). It outputs the angle whose sine is equal to the input.
+     *
+     * @param {Object} component - The Asin component to process
+     * @param {Object} component.inputs - The input signal values
+     * @param {number|string} component.inputs.SIGNAL_IN - The input signal, clamped to [-1, 1]
+     * @param {Object} component.settings - The component's configuration settings
+     * @param {boolean} component.settings.useRadians - If set to true, the trigonometric function uses radians instead of degrees.
+     * @returns {number|undefined} The arcsine of the input, or undefined if the input is not valid
+     */
+    _processAsinTick (component) {
+      const signalIn = component.inputs?.SIGNAL_IN
+
+      if (signalIn !== undefined) {
+        let num = parseFloat(signalIn) || 0
+
+        // Clamp the input value to the valid range for asin [-1, 1]
+        num = Math.max(-1, Math.min(1, num))
+
+        let angle = Math.asin(num)
 
         if (!component.settings.useRadians) {
           angle = angle * (180 / Math.PI)
