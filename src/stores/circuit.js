@@ -39,6 +39,7 @@ import OrComponent from '../components/circuit/OrComponent.vue'
 import OscillatorComponent from '../components/circuit/OscillatorComponent.vue'
 import OutputSelectorComponent from '../components/circuit/OutputSelectorComponent.vue'
 import RegExComponent from '../components/circuit/RegExComponent.vue'
+import RelayComponent from '../components/circuit/RelayComponent.vue'
 
 const componentMap = {
   Adder: AdderComponent,
@@ -73,7 +74,8 @@ const componentMap = {
   Or: OrComponent,
   Oscillator: OscillatorComponent,
   OutputSelector: OutputSelectorComponent,
-  RegEx: RegExComponent
+  RegEx: RegExComponent,
+  Relay: RelayComponent
 }
 
 const toast = useToast()
@@ -419,6 +421,11 @@ export const useCircuitStore = defineStore('circuit', {
 
       if (newComponent.name === 'RegEx') {
         newComponent.value = newComponent.settings.falseOutput
+      }
+
+      if (newComponent.name === 'Relay') {
+        newComponent.isOn = newComponent.settings.isOn
+        newComponent.lastToggleSignal = 0
       }
 
       this.boardComponents.push(newComponent)
@@ -1366,6 +1373,7 @@ export const useCircuitStore = defineStore('circuit', {
             case 'Oscillator': newValues = this._processOscillatorTick(component); break
             case 'OutputSelector': newValues = this._processOutputSelectorTick(component); break
             case 'RegEx': newValues = this._processRegExTick(component); break
+            case 'Relay': newValues = this._processRelayTick(component); break
             case 'Display': this._processDisplayTick(component); break
           }
 
@@ -3047,6 +3055,48 @@ export const useCircuitStore = defineStore('circuit', {
       component.value = outputSignal
 
       return { SIGNAL_OUT: outputSignal }
+    },
+
+    /**
+     * Processes a single tick for a Relay component.
+     * @param {Object} component The component to process.
+     * @returns {Object|undefined} An object with output signals.
+     */
+    _processRelayTick (component) {
+      const { inputs } = component
+      const toggleState = inputs?.TOGGLE_STATE
+      const setState = inputs?.SET_STATE
+
+      // --- Update state ---
+      if (toggleState !== undefined && toggleState !== component.lastToggleSignal) {
+        if (toggleState !== 0) {
+          component.isOn = !component.isOn
+        }
+
+        component.lastToggleSignal = toggleState
+      }
+
+      if (setState !== undefined) {
+        component.isOn = (String(setState).trim() !== '0')
+      }
+
+      // --- Determine outputs ---
+      const stateOut = component.isOn ? 1 : 0
+      let signalOut1, signalOut2
+
+      if (component.isOn) {
+        signalOut1 = inputs?.SIGNAL_IN_1
+        signalOut2 = inputs?.SIGNAL_IN_2
+      } else {
+        signalOut1 = 0
+        signalOut2 = 0
+      }
+
+      return {
+        STATE_OUT: stateOut,
+        SIGNAL_OUT_1: signalOut1,
+        SIGNAL_OUT_2: signalOut2
+      }
     },
 
     // --- Import/Export Actions ---

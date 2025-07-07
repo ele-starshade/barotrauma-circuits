@@ -81,6 +81,7 @@ const OrComponent = markRaw(defineAsyncComponent(() => import('./circuit/OrCompo
 const OscillatorComponent = markRaw(defineAsyncComponent(() => import('./circuit/OscillatorComponent.vue')))
 const OutputSelectorComponent = markRaw(defineAsyncComponent(() => import('./circuit/OutputSelectorComponent.vue')))
 const RegExComponent = markRaw(defineAsyncComponent(() => import('./circuit/RegExComponent.vue')))
+const RelayComponent = markRaw(defineAsyncComponent(() => import('./circuit/RelayComponent.vue')))
 
 const circuit = useCircuitStore()
 
@@ -392,6 +393,13 @@ const trayComponents = shallowRef([
       useCaptureGroup: false,
       outputEmptyCaptureGroup: false,
       continuousOutput: true
+    }
+  },
+  {
+    name: 'Relay',
+    is: RelayComponent,
+    settings: {
+      isOn: true
     }
   }
 ])
