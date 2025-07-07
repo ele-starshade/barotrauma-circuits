@@ -87,7 +87,8 @@ body {
   flex-shrink: 0;
 }
 
-.component.text-based[data-component-type="input_selector"] {
+.component.text-based[data-component-type="input-selector"],
+.component.text-based[data-component-type="output-selector"] {
   width: 220px;
 }
 

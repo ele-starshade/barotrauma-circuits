@@ -85,7 +85,12 @@ watch(() => props.settings, (newSettings) => {
 }, { deep: true })
 
 function updateSettings () {
-  circuit.updateComponentSettings(props.id, { ...localSettings })
+  const settingsToUpdate = {
+    ...localSettings,
+    outputType: Number(localSettings.outputType)
+  }
+
+  circuit.updateComponentSettings(props.id, settingsToUpdate)
 }
 
 function handleStartWiring (pinName) {

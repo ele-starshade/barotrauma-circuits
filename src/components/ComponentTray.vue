@@ -79,6 +79,7 @@ const ModuloComponent = markRaw(defineAsyncComponent(() => import('./circuit/Mod
 const NotComponent = markRaw(defineAsyncComponent(() => import('./circuit/NotComponent.vue')))
 const OrComponent = markRaw(defineAsyncComponent(() => import('./circuit/OrComponent.vue')))
 const OscillatorComponent = markRaw(defineAsyncComponent(() => import('./circuit/OscillatorComponent.vue')))
+const OutputSelectorComponent = markRaw(defineAsyncComponent(() => import('./circuit/OutputSelectorComponent.vue')))
 
 const circuit = useCircuitStore()
 
@@ -368,6 +369,15 @@ const trayComponents = shallowRef([
     settings: {
       frequency: 1,
       outputType: 0
+    }
+  },
+  {
+    name: 'OutputSelector',
+    is: OutputSelectorComponent,
+    settings: {
+      selectedConnection: 0,
+      wrapAround: true,
+      skipEmptyConnections: true
     }
   }
 ])

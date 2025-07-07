@@ -1,53 +1,54 @@
 <template>
   <!-- Tray Version (Graphical) -->
-  <div v-if="mode === 'tray'" v-bind="$attrs" class="component graphical" data-component-type="input-selector">
-    <ComponentPins class="pins-in" :count="7" />
+  <div v-if="mode === 'tray'" v-bind="$attrs" class="component graphical" data-component-type="output-selector">
+    <ComponentPins class="pins-in" :count="3" />
 
     <div class="icon-container">
-      <div class="component-icon-sprite icon-input-selector" />
-      <div class="component-name">Input Selector</div>
+      <div class="component-icon-sprite icon-output-selector" />
+      <div class="component-name">Output Selector</div>
     </div>
 
-    <ComponentPins class="pins-out" :count="2" />
+    <ComponentPins class="pins-out" :count="7" />
   </div>
 
   <!-- Board Version (Text-based) -->
-  <div v-else v-bind="$attrs" class="component text-based" data-component-type="input-selector" :id="props.id">
-    <div class="component-header">Input Selector</div>
+  <div v-else v-bind="$attrs" class="component text-based component-wide" data-component-type="output-selector" :id="props.id">
+    <div class="component-header">Output Selector</div>
     <div class="component-body">
-      <!-- Input pins 0-9 -->
-      <div v-for="i in 10" :key="`in-${i - 1}`" class="component-pin in" :data-pin-name="`SIGNAL_IN_${i - 1}`">
-        <div class="new-wire-zone" @mousedown.stop="handleStartWiring(`SIGNAL_IN_${i - 1}`)"></div>
-        <div class="pin-circle"></div>
-        <span>SIGNAL_IN_{{ i - 1 }}</span>
+      <div class="pins-container-in">
+        <div class="component-pin in" data-pin-name="SIGNAL_IN">
+          <div class="new-wire-zone" @mousedown.stop="handleStartWiring('SIGNAL_IN')"></div>
+          <div class="pin-circle"></div>
+          <span>SIGNAL_IN</span>
+        </div>
+        <div class="component-pin in" data-pin-name="SET_OUTPUT">
+          <div class="new-wire-zone" @mousedown.stop="handleStartWiring('SET_OUTPUT')"></div>
+          <div class="pin-circle"></div>
+          <span>SET_OUTPUT</span>
+        </div>
+        <div class="component-pin in" data-pin-name="MOVE_OUTPUT">
+          <div class="new-wire-zone" @mousedown.stop="handleStartWiring('MOVE_OUTPUT')"></div>
+          <div class="pin-circle"></div>
+          <span>MOVE_OUTPUT</span>
+        </div>
       </div>
-      <!-- Control pins -->
-      <div class="component-pin in" data-pin-name="SET_INPUT">
-        <div class="new-wire-zone" @mousedown.stop="handleStartWiring('SET_INPUT')"></div>
-        <div class="pin-circle"></div>
-        <span>SET_INPUT</span>
-      </div>
-      <div class="component-pin in" data-pin-name="MOVE_INPUT">
-        <div class="new-wire-zone" @mousedown.stop="handleStartWiring('MOVE_INPUT')"></div>
-        <div class="pin-circle"></div>
-        <span>MOVE_INPUT</span>
-      </div>
-      <!-- Output pins -->
-      <div class="component-pin out" data-pin-name="SIGNAL_OUT">
-        <span>SIGNAL_OUT</span>
-        <div class="new-wire-zone" @mousedown.stop="handleStartWiring('SIGNAL_OUT')"></div>
-        <div class="pin-circle"></div>
-      </div>
-      <div class="component-pin out" data-pin-name="SELECTED_INPUT_OUT">
-        <span>SELECTED_INPUT_OUT</span>
-        <div class="new-wire-zone" @mousedown.stop="handleStartWiring('SELECTED_INPUT_OUT')"></div>
-        <div class="pin-circle"></div>
+      <div class="pins-container-out">
+        <div v-for="i in 10" :key="i" class="component-pin out" :data-pin-name="`SIGNAL_OUT_${i - 1}`">
+          <span>{{ `SIGNAL_OUT_${i - 1}` }}</span>
+          <div class="new-wire-zone" @mousedown.stop="handleStartWiring(`SIGNAL_OUT_${i - 1}`)"></div>
+          <div class="pin-circle"></div>
+        </div>
+        <div class="component-pin out" data-pin-name="SELECTED_OUTPUT_OUT">
+          <span>SELECTED_OUTPUT_OUT</span>
+          <div class="new-wire-zone" @mousedown.stop="handleStartWiring('SELECTED_OUTPUT_OUT')"></div>
+          <div class="pin-circle"></div>
+        </div>
       </div>
     </div>
   </div>
 
   <Teleport to="#config-panel-container" v-if="isSelected && mode === 'board'">
-    <ConfigPanel title="Input Selector Component">
+    <ConfigPanel title="Output Selector Component">
       <div class="form-group">
         <label :for="`selected-connection-${id}`">Selected connection</label>
         <input type="number" class="form-control" v-model.number="localSettings.selectedConnection"

@@ -37,6 +37,7 @@ import ModuloComponent from '../components/circuit/ModuloComponent.vue'
 import NotComponent from '../components/circuit/NotComponent.vue'
 import OrComponent from '../components/circuit/OrComponent.vue'
 import OscillatorComponent from '../components/circuit/OscillatorComponent.vue'
+import OutputSelectorComponent from '../components/circuit/OutputSelectorComponent.vue'
 
 const componentMap = {
   Adder: AdderComponent,
@@ -69,7 +70,8 @@ const componentMap = {
   Modulo: ModuloComponent,
   Not: NotComponent,
   Or: OrComponent,
-  Oscillator: OscillatorComponent
+  Oscillator: OscillatorComponent,
+  OutputSelector: OutputSelectorComponent
 }
 
 const toast = useToast()
@@ -92,6 +94,7 @@ export const useCircuitStore = defineStore('circuit', {
 
     simulationRunning: false,
     simulationIntervalId: null,
+    tickInterval: 50, // ms, 20 ticks per second
 
     // Counters for unique IDs
     componentIdCounter: 0,
@@ -403,7 +406,13 @@ export const useCircuitStore = defineStore('circuit', {
       }
 
       if (newComponent.name === 'Oscillator') {
-        newComponent.phase = 0
+        newComponent.cumulativePhase = 0
+        newComponent.value = 0 // For debugging sticky pulse
+      }
+
+      if (newComponent.name === 'OutputSelector') {
+        newComponent.selectedConnection = newComponent.settings.selectedConnection
+        newComponent.lastMoveSignal = 0
       }
 
       this.boardComponents.push(newComponent)
@@ -1204,7 +1213,7 @@ export const useCircuitStore = defineStore('circuit', {
       this.simulationRunning = true
       this.simulationIntervalId = setInterval(() => {
         this.tick()
-      }, 50)
+      }, this.tickInterval)
     },
 
     /**
@@ -1349,6 +1358,8 @@ export const useCircuitStore = defineStore('circuit', {
             case 'Not': newValues = this._processNotTick(component); break
             case 'Or': newValues = this._processOrTick(component); break
             case 'Oscillator': newValues = this._processOscillatorTick(component); break
+            case 'OutputSelector': newValues = this._processOutputSelectorTick(component); break
+            case 'Display': this._processDisplayTick(component); break
           }
 
           if (newValues) {
@@ -2818,43 +2829,160 @@ export const useCircuitStore = defineStore('circuit', {
      * @returns {Object|undefined} An object with SIGNAL_OUT.
      */
     _processOscillatorTick (component) {
+      // Ensure phase is valid, default to 0
+      if (typeof component.cumulativePhase !== 'number' || isNaN(component.cumulativePhase)) {
+        component.cumulativePhase = 0
+      }
+
       const { inputs, settings } = component
-      const frequency = inputs?.SET_FREQUENCY ?? settings.frequency
-      const outputType = inputs?.SET_OUTPUTTYPE ?? settings.outputType
+
+      // Determine a valid frequency, preferring input, falling back to settings. Default to 1 if both are invalid.
+      let frequency = 1
+
+      if (settings?.frequency && typeof settings.frequency === 'number' && !isNaN(settings.frequency)) {
+        frequency = settings.frequency
+      }
+
+      if (inputs?.SET_FREQUENCY !== undefined && String(inputs.SET_FREQUENCY).trim() !== '') {
+        const parsedFreq = parseFloat(inputs.SET_FREQUENCY)
+
+        if (!isNaN(parsedFreq)) {
+          frequency = parsedFreq
+        }
+      }
+
+      // Determine a valid outputType, with similar logic. Default to 0.
+      let outputType = 0
+
+      if (settings?.outputType >= 0 && settings?.outputType <= 4) {
+        outputType = settings.outputType
+      }
+
+      if (inputs?.SET_OUTPUTTYPE !== undefined && String(inputs.SET_OUTPUTTYPE).trim() !== '') {
+        const parsedType = parseInt(inputs.SET_OUTPUTTYPE, 10)
+
+        if (!isNaN(parsedType) && parsedType >= 0 && parsedType <= 4) {
+          outputType = parsedType
+        }
+      }
 
       // Advance phase
-      const phaseIncrement = (parseFloat(frequency) || 0) * (this.tickInterval / 1000)
-      const oldPhase = component.phase
+      const phaseIncrement = frequency * (this.tickInterval / 1000)
+      const oldPhase = component.cumulativePhase
 
-      component.phase = (component.phase + phaseIncrement) % 1.0
+      component.cumulativePhase += phaseIncrement
+
+      const currentCyclePhase = ((component.cumulativePhase % 1.0) + 1.0) % 1.0
 
       let output = 0
 
-      switch (parseInt(outputType)) {
-        case 0: // Pulse
-          // Output 1 if the phase has wrapped around
-          output = (oldPhase > component.phase) ? 1 : 0
+      switch (outputType) {
+        case 0: { // Pulse
+          // A pulse occurs when the phase crosses an integer boundary
+          const hasCycled = Math.floor(component.cumulativePhase) !== Math.floor(oldPhase)
+
+          output = (frequency !== 0 && hasCycled) ? 1 : 0
           break
+        }
         case 1: // Sawtooth
-          output = component.phase
+          output = currentCyclePhase
           break
         case 2: // Sine
-          output = Math.sin(component.phase * 2 * Math.PI)
+          output = Math.sin(currentCyclePhase * 2 * Math.PI)
           break
         case 3: // Square
-          output = (component.phase < 0.5) ? 1 : 0
+          output = (currentCyclePhase < 0.5) ? 1 : 0
           break
         case 4: // Triangle
-          if (component.phase < 0.5) {
-            output = component.phase * 4 - 1
+          if (currentCyclePhase < 0.5) {
+            output = currentCyclePhase * 4 - 1
           } else {
-            output = -component.phase * 4 + 3
+            output = -currentCyclePhase * 4 + 3
           }
 
           break
       }
 
       return { SIGNAL_OUT: output }
+    },
+
+    /**
+     * Processes a single tick for a Display component, updating its value.
+     * @param {Object} component The Display component to process.
+     */
+    _processDisplayTick (component) {
+      const signalIn = component.inputs?.SIGNAL_IN
+
+      if (signalIn !== undefined) {
+        component.value = signalIn
+      }
+    },
+
+    /**
+     * Processes a single tick for an OutputSelector component.
+     * @param {Object} component The component to process.
+     * @returns {Object|undefined} An object with output signals.
+     */
+    _processOutputSelectorTick (component) {
+      const { inputs, settings } = component
+      const signalIn = inputs?.SIGNAL_IN
+      const setOutput = inputs?.SET_OUTPUT
+      const moveOutput = parseFloat(inputs?.MOVE_OUTPUT) || 0
+
+      // --- Update selected connection ---
+      if (setOutput !== undefined) {
+        const newSelection = parseInt(setOutput, 10)
+
+        if (!isNaN(newSelection) && newSelection >= 0 && newSelection <= 9) {
+          component.selectedConnection = newSelection
+        }
+      } else if (moveOutput !== 0 && component.lastMoveSignal === 0) {
+        const step = Math.sign(moveOutput)
+        const connectedOutputPins = this.wires
+          .filter(w => w.fromId === component.id && w.fromPinName.startsWith('SIGNAL_OUT_'))
+          .map(w => parseInt(w.fromPinName.split('_')[2]))
+
+        let nextConnection = component.selectedConnection
+        let attempts = 0
+
+        do {
+          nextConnection += step
+          if (settings.wrapAround) {
+            nextConnection = (nextConnection + 10) % 10
+          } else {
+            nextConnection = Math.max(0, Math.min(9, nextConnection))
+          }
+
+          attempts++
+        } while (
+          settings.skipEmptyConnections &&
+          !connectedOutputPins.includes(nextConnection) &&
+          attempts < 10
+        )
+
+        if (attempts < 10) {
+          component.selectedConnection = nextConnection
+        }
+      }
+
+      component.lastMoveSignal = moveOutput
+
+      // --- Determine outputs ---
+      const outputs = {
+        SELECTED_OUTPUT_OUT: component.selectedConnection
+      }
+
+      // Set all other outputs to undefined
+      for (let i = 0; i < 10; i++) {
+        outputs[`SIGNAL_OUT_${i}`] = undefined
+      }
+
+      // Set the selected output to the input signal
+      if (signalIn !== undefined) {
+        outputs[`SIGNAL_OUT_${component.selectedConnection}`] = signalIn
+      }
+
+      return outputs
     },
 
     // --- Import/Export Actions ---
