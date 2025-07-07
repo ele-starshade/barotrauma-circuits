@@ -86,6 +86,7 @@ const RoundComponent = markRaw(defineAsyncComponent(() => import('./circuit/Roun
 const SinComponent = markRaw(defineAsyncComponent(() => import('./circuit/SinComponent.vue')))
 const SquareRootComponent = markRaw(defineAsyncComponent(() => import('./circuit/SquareRootComponent.vue')))
 const TanComponent = markRaw(defineAsyncComponent(() => import('./circuit/TanComponent.vue')))
+const WiFiComponent = markRaw(defineAsyncComponent(() => import('./circuit/WiFiComponent.vue')))
 
 const circuit = useCircuitStore()
 
@@ -427,6 +428,10 @@ const trayComponents = shallowRef([
     settings: {
       useRadians: false
     }
+  },
+  {
+    name: 'WiFi',
+    is: WiFiComponent
   }
 ])
 

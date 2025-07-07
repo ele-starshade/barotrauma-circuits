@@ -44,6 +44,7 @@ import RoundComponent from '../components/circuit/RoundComponent.vue'
 import SinComponent from '../components/circuit/SinComponent.vue'
 import SquareRootComponent from '../components/circuit/SquareRootComponent.vue'
 import TanComponent from '../components/circuit/TanComponent.vue'
+import WiFiComponent from '../components/circuit/WiFiComponent.vue'
 
 const componentMap = {
   Adder: AdderComponent,
@@ -83,7 +84,8 @@ const componentMap = {
   Round: RoundComponent,
   Sin: SinComponent,
   SquareRoot: SquareRootComponent,
-  Tan: TanComponent
+  Tan: TanComponent,
+  WiFi: WiFiComponent
 }
 
 const toast = useToast()
@@ -111,7 +113,9 @@ export const useCircuitStore = defineStore('circuit', {
     // Counters for unique IDs
     componentIdCounter: 0,
     wireIdCounter: 0,
-    waypointIdCounter: 0
+    waypointIdCounter: 0,
+    componentOutputs: {},
+    wifiChannels: {}
   }),
 
   getters: {
@@ -450,6 +454,10 @@ export const useCircuitStore = defineStore('circuit', {
 
       if (newComponent.name === 'Tan') {
         // Tan component has no specific state to initialize here
+      }
+
+      if (newComponent.name === 'WiFi') {
+        // WiFi component has no specific state to initialize here
       }
 
       this.boardComponents.push(newComponent)
@@ -1402,6 +1410,7 @@ export const useCircuitStore = defineStore('circuit', {
             case 'Sin': newValues = this._processSinTick(component); break
             case 'SquareRoot': newValues = this._processSquareRootTick(component); break
             case 'Tan': newValues = this._processTanTick(component); break
+            case 'WiFi': newValues = this._processWiFiTick(component); break
             case 'Display': this._processDisplayTick(component); break
           }
 
@@ -1517,6 +1526,23 @@ export const useCircuitStore = defineStore('circuit', {
         iterations++
       }
 
+      // Stage 2.5: Broadcast WiFi signals for the *next* tick
+      const nextWifiChannels = {} // Start with a clean slate for this tick's broadcasts
+
+      this.boardComponents.forEach(component => {
+        if (component.name === 'WiFi') {
+          const { settings, inputs } = component
+          const channelOverride = inputs?.SET_CHANNEL
+          const channel = channelOverride !== undefined ? Number(channelOverride) : settings.channel
+          const signalIn = inputs?.SIGNAL_IN
+
+          if (signalIn !== undefined) {
+            nextWifiChannels[channel] = signalIn
+          }
+        }
+      })
+      this.wifiChannels = nextWifiChannels
+
       // Stage 3: Finalize state for rendering.
       this.wires.forEach(wire => {
         const fromKey = `${wire.fromId}:${wire.fromPin}`
@@ -1531,6 +1557,37 @@ export const useCircuitStore = defineStore('circuit', {
       this.boardComponents.forEach(component => {
         if (component.name === 'Display') {
           component.value = component.inputs?.SIGNAL_IN_1 ?? null
+        }
+      })
+
+      // After calculating all potential outputs, update the state
+      this.componentOutputs = new Map(outputValues)
+
+      // Second pass for WiFi components to receive signals
+      this.boardComponents.forEach(component => {
+        if (component.name === 'WiFi') {
+          const getInputValue = (pinName) => { // Redefine helper for this scope
+            const wire = this.wires.find(w => w.to.componentId === component.id && w.to.pinName === pinName)
+
+            if (!wire) return undefined
+
+            const fromComponentOutputs = this.componentOutputs[wire.from.componentId]
+
+            return fromComponentOutputs ? fromComponentOutputs[wire.from.pinName] : undefined
+          }
+
+          const channelOverride = getInputValue('SET_CHANNEL')
+          const channel = channelOverride !== undefined ? channelOverride : component.settings.channel
+          // Read from the channels of the PREVIOUS tick
+          const signalOut = this.wifiChannels[channel]
+
+          if (signalOut !== undefined) {
+            if (!this.componentOutputs[component.id]) {
+              this.componentOutputs[component.id] = {}
+            }
+
+            this.componentOutputs[component.id].SIGNAL_OUT = signalOut
+          }
         }
       })
     },
@@ -3211,6 +3268,28 @@ export const useCircuitStore = defineStore('circuit', {
       }
 
       return { SIGNAL_OUT: 0 }
+    },
+
+    /**
+     * Processes a single tick for a WiFi component in the circuit simulation.
+     *
+     * Receives signals broadcasted on a specific channel from other WiFi components.
+     * The signal is read from the state of the previous tick to ensure a 1-tick delay.
+     *
+     * @param {Object} component - The WiFi component to process.
+     * @returns {Object|undefined} An object with SIGNAL_OUT if a signal is on the channel.
+     */
+    _processWiFiTick (component) {
+      const { settings, inputs } = component
+      const channelOverride = inputs?.SET_CHANNEL
+      const channel = channelOverride !== undefined ? Number(channelOverride) : settings.channel
+
+      // Read from the channels of the PREVIOUS tick
+      const signalOut = this.wifiChannels[channel]
+
+      if (signalOut !== undefined) {
+        return { SIGNAL_OUT: signalOut }
+      }
     },
 
     // --- Import/Export Actions ---
