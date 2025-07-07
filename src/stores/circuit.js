@@ -30,6 +30,7 @@ import DelayComponent from '../components/circuit/DelayComponent.vue'
 import ExponentiationComponent from '../components/circuit/ExponentiationComponent.vue'
 import FactorialComponent from '../components/circuit/FactorialComponent.vue'
 import EqualsComponent from '../components/circuit/EqualsComponent.vue'
+import FloorComponent from '../components/circuit/FloorComponent.vue'
 
 const componentMap = {
   Adder: AdderComponent,
@@ -55,7 +56,8 @@ const componentMap = {
   Delay: DelayComponent,
   Exponentiation: ExponentiationComponent,
   Factorial: FactorialComponent,
-  Equals: EqualsComponent
+  Equals: EqualsComponent,
+  Floor: FloorComponent
 }
 
 const toast = useToast()
@@ -361,6 +363,10 @@ export const useCircuitStore = defineStore('circuit', {
 
       if (newComponent.name === 'Equals') {
         newComponent.lastSignalTimestamps = {}
+      }
+
+      if (newComponent.name === 'Floor') {
+        // Floor component has no specific state to initialize here
       }
 
       this.boardComponents.push(newComponent)
@@ -1274,7 +1280,7 @@ export const useCircuitStore = defineStore('circuit', {
 
         // First, determine the output of each component based on its current inputs.
         this.boardComponents.forEach(component => {
-          const outputPin = (component.name === 'Adder' || component.name === 'And' || component.name === 'Subtract' || component.name === 'Multiply' || component.name === 'Divide' || component.name === 'Xor' || component.name === 'SignalCheck' || component.name === 'Greater' || component.name === 'Abs' || component.name === 'Acos' || component.name === 'Asin' || component.name === 'Atan' || component.name === 'Ceil' || component.name === 'Color' || component.name === 'Concatenation' || component.name === 'Cos' || component.name === 'Delay' || component.name === 'Exponentiation' || component.name === 'Factorial' || component.name === 'Equals') ? 'SIGNAL_OUT' : 'VALUE_OUT'
+          const outputPin = (component.name === 'Adder' || component.name === 'And' || component.name === 'Subtract' || component.name === 'Multiply' || component.name === 'Divide' || component.name === 'Xor' || component.name === 'SignalCheck' || component.name === 'Greater' || component.name === 'Abs' || component.name === 'Acos' || component.name === 'Asin' || component.name === 'Atan' || component.name === 'Ceil' || component.name === 'Color' || component.name === 'Concatenation' || component.name === 'Cos' || component.name === 'Delay' || component.name === 'Exponentiation' || component.name === 'Factorial' || component.name === 'Equals' || component.name === 'Floor') ? 'SIGNAL_OUT' : 'VALUE_OUT'
           const key = `${component.id}:${outputPin}`
           const currentValue = outputValues.get(key)
           let newValue
@@ -1302,6 +1308,7 @@ export const useCircuitStore = defineStore('circuit', {
             case 'Exponentiation': newValue = this._processExponentiationTick(component); break
             case 'Factorial': newValue = this._processFactorialTick(component); break
             case 'Equals': newValue = this._processEqualsTick(component); break
+            case 'Floor': newValue = this._processFloorTick(component); break
           }
 
           if (newValue !== undefined && currentValue !== newValue) {
@@ -2042,7 +2049,7 @@ export const useCircuitStore = defineStore('circuit', {
     },
 
     /**
-     * Processes a Greater component tick to compare two input signals within a timeframe
+     * Processes a single tick for the Greater component
      *
      * Evaluates whether the first input signal is greater than the second input signal,
      * considering timing constraints and returning appropriate output values based on
@@ -2309,6 +2316,26 @@ export const useCircuitStore = defineStore('circuit', {
         const num = parseFloat(signalIn) || 0
 
         return Math.ceil(num)
+      }
+    },
+
+    /**
+     * Processes a single tick for a Floor component in the circuit simulation
+     *
+     * Outputs the largest integer value that is smaller than or equal to the input.
+     *
+     * @param {Object} component - The Floor component to process
+     * @param {Object} component.inputs - The input signal values
+     * @param {number|string} [component.inputs.SIGNAL_IN] - The input signal
+     * @returns {number|undefined} The floor of the input, or undefined if the input is not valid
+     */
+    _processFloorTick (component) {
+      const signalIn = component.inputs?.SIGNAL_IN
+
+      if (signalIn !== undefined) {
+        const num = parseFloat(signalIn) || 0
+
+        return Math.floor(num)
       }
     },
 
