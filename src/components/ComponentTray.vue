@@ -45,21 +45,21 @@
 </template>
 
 <script setup>
-import { computed, defineAsyncComponent, shallowRef } from 'vue'
+import { computed, defineAsyncComponent, shallowRef, markRaw } from 'vue'
 import { useCircuitStore } from '../stores/circuit'
 
-const AdderComponent = defineAsyncComponent(() => import('./circuit/AdderComponent.vue'))
-const AndComponent = defineAsyncComponent(() => import('./circuit/AndComponent.vue'))
-const ConstantComponent = defineAsyncComponent(() => import('./circuit/tools/ConstantComponent.vue'))
-const RandomComponent = defineAsyncComponent(() => import('./circuit/tools/RandomComponent.vue'))
-const DisplayComponent = defineAsyncComponent(() => import('./circuit/tools/DisplayComponent.vue'))
-const SubtractComponent = defineAsyncComponent(() => import('./circuit/SubtractComponent.vue'))
-const MultiplyComponent = defineAsyncComponent(() => import('./circuit/MultiplyComponent.vue'))
-const DivideComponent = defineAsyncComponent(() => import('./circuit/DivideComponent.vue'))
-const XorComponent = defineAsyncComponent(() => import('./circuit/XorComponent.vue'))
-const SignalCheckComponent = defineAsyncComponent(() => import('./circuit/SignalCheckComponent.vue'))
-const GreaterComponent = defineAsyncComponent(() => import('./circuit/GreaterComponent.vue'))
-const LightComponent = defineAsyncComponent(() => import('./circuit/tools/LightComponent.vue'))
+const AdderComponent = markRaw(defineAsyncComponent(() => import('./circuit/AdderComponent.vue')))
+const AndComponent = markRaw(defineAsyncComponent(() => import('./circuit/AndComponent.vue')))
+const ConstantComponent = markRaw(defineAsyncComponent(() => import('./circuit/tools/ConstantComponent.vue')))
+const RandomComponent = markRaw(defineAsyncComponent(() => import('./circuit/tools/RandomComponent.vue')))
+const DisplayComponent = markRaw(defineAsyncComponent(() => import('./circuit/tools/DisplayComponent.vue')))
+const SubtractComponent = markRaw(defineAsyncComponent(() => import('./circuit/SubtractComponent.vue')))
+const MultiplyComponent = markRaw(defineAsyncComponent(() => import('./circuit/MultiplyComponent.vue')))
+const DivideComponent = markRaw(defineAsyncComponent(() => import('./circuit/DivideComponent.vue')))
+const XorComponent = markRaw(defineAsyncComponent(() => import('./circuit/XorComponent.vue')))
+const SignalCheckComponent = markRaw(defineAsyncComponent(() => import('./circuit/SignalCheckComponent.vue')))
+const GreaterComponent = markRaw(defineAsyncComponent(() => import('./circuit/GreaterComponent.vue')))
+const LightComponent = markRaw(defineAsyncComponent(() => import('./circuit/tools/LightComponent.vue')))
 
 const circuit = useCircuitStore()
 
