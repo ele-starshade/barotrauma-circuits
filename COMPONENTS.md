@@ -2,7 +2,7 @@
 
 This file tracks the implementation status of various components for the circuit simulator.
 
-**Completion Status: 25/35 (71.43%)**
+**Completion Status: 26/35 (74.29%)**
 
 ## Component Checklist
 
@@ -28,7 +28,7 @@ This file tracks the implementation status of various components for the circuit
 - [x] Modulo
 - [x] Multiply
 - [x] Not
-- [ ] Or
+- [x] Or
 - [ ] Oscillator
 - [ ] Output Selector
 - [ ] RegEx Find

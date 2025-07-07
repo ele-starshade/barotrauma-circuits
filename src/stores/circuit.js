@@ -35,6 +35,7 @@ import InputSelectorComponent from '../components/circuit/InputSelectorComponent
 import MemoryComponent from '../components/circuit/MemoryComponent.vue'
 import ModuloComponent from '../components/circuit/ModuloComponent.vue'
 import NotComponent from '../components/circuit/NotComponent.vue'
+import OrComponent from '../components/circuit/OrComponent.vue'
 
 const componentMap = {
   Adder: AdderComponent,
@@ -65,7 +66,8 @@ const componentMap = {
   InputSelector: InputSelectorComponent,
   Memory: MemoryComponent,
   Modulo: ModuloComponent,
-  Not: NotComponent
+  Not: NotComponent,
+  Or: OrComponent
 }
 
 const toast = useToast()
@@ -392,6 +394,10 @@ export const useCircuitStore = defineStore('circuit', {
 
       if (newComponent.name === 'Not') {
         newComponent.value = 0
+      }
+
+      if (newComponent.name === 'Or') {
+        // Or component has no specific state to initialize here
       }
 
       this.boardComponents.push(newComponent)
@@ -1335,6 +1341,7 @@ export const useCircuitStore = defineStore('circuit', {
             case 'Memory': newValues = this._processMemoryTick(component); break
             case 'Modulo': newValues = this._processModuloTick(component); break
             case 'Not': newValues = this._processNotTick(component); break
+            case 'Or': newValues = this._processOrTick(component); break
           }
 
           if (newValues) {
@@ -2761,6 +2768,39 @@ export const useCircuitStore = defineStore('circuit', {
         } else {
           return { SIGNAL_OUT: 0 }
         }
+      }
+    },
+
+    /**
+     * Processes a single tick for an Or component in the circuit simulation.
+     *
+     * Outputs the 'output' value if either input is active, otherwise outputs 'falseOutput'.
+     *
+     * @param {Object} component - The Or component to process.
+     * @returns {Object|undefined} An object with SIGNAL_OUT.
+     */
+    _processOrTick (component) {
+      const { inputs, settings } = component
+      const signal1 = inputs?.SIGNAL_IN_1
+      const signal2 = inputs?.SIGNAL_IN_2
+      const setOutput = inputs?.SET_OUTPUT
+
+      const outputValue = setOutput !== undefined ? setOutput : settings.output
+      const falseOutputValue = settings.falseOutput
+
+      const isSignal1Active = signal1 !== undefined && String(signal1).trim() !== '' && parseFloat(signal1) !== 0
+      const isSignal2Active = signal2 !== undefined && String(signal2).trim() !== '' && parseFloat(signal2) !== 0
+
+      if (isSignal1Active || isSignal2Active) {
+        let finalOutput = String(outputValue)
+
+        if (settings.maxOutputLength > -1) {
+          finalOutput = finalOutput.substring(0, settings.maxOutputLength)
+        }
+
+        return { SIGNAL_OUT: finalOutput }
+      } else {
+        return { SIGNAL_OUT: falseOutputValue }
       }
     },
 

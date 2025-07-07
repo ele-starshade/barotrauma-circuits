@@ -77,6 +77,7 @@ const InputSelectorComponent = markRaw(defineAsyncComponent(() => import('./circ
 const MemoryComponent = markRaw(defineAsyncComponent(() => import('./circuit/MemoryComponent.vue')))
 const ModuloComponent = markRaw(defineAsyncComponent(() => import('./circuit/ModuloComponent.vue')))
 const NotComponent = markRaw(defineAsyncComponent(() => import('./circuit/NotComponent.vue')))
+const OrComponent = markRaw(defineAsyncComponent(() => import('./circuit/OrComponent.vue')))
 
 const circuit = useCircuitStore()
 
@@ -348,6 +349,16 @@ const trayComponents = shallowRef([
     is: NotComponent,
     settings: {
       continuousOutput: false
+    }
+  },
+  {
+    name: 'Or',
+    is: OrComponent,
+    settings: {
+      timeframe: 0.00,
+      maxOutputLength: 200,
+      output: '1',
+      falseOutput: '0'
     }
   }
 ])
