@@ -71,6 +71,7 @@ const CosComponent = markRaw(defineAsyncComponent(() => import('./circuit/CosCom
 const DelayComponent = markRaw(defineAsyncComponent(() => import('./circuit/DelayComponent.vue')))
 const ExponentiationComponent = markRaw(defineAsyncComponent(() => import('./circuit/ExponentiationComponent.vue')))
 const FactorialComponent = markRaw(defineAsyncComponent(() => import('./circuit/FactorialComponent.vue')))
+const EqualsComponent = markRaw(defineAsyncComponent(() => import('./circuit/EqualsComponent.vue')))
 
 const circuit = useCircuitStore()
 
@@ -296,6 +297,16 @@ const trayComponents = shallowRef([
     name: 'Factorial',
     is: FactorialComponent,
     value: ''
+  },
+  {
+    name: 'Equals',
+    is: EqualsComponent,
+    settings: {
+      maxOutputLength: 200,
+      output: '1',
+      falseOutput: '0',
+      timeframe: 0.0
+    }
   }
 ])
 

@@ -2,7 +2,7 @@
 
 This file tracks the implementation status of various components for the circuit simulator.
 
-**Completion Status: 19/35 (54.29%)**
+**Completion Status: 20/35 (57.14%)**
 
 ## Component Checklist
 
@@ -18,7 +18,7 @@ This file tracks the implementation status of various components for the circuit
 - [x] Cos
 - [x] Delay
 - [x] Divide
-- [ ] Equals
+- [x] Equals
 - [x] Exponentiation
 - [x] Factorial
 - [ ] Floor

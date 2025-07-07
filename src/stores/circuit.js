@@ -29,6 +29,7 @@ import CosComponent from '../components/circuit/CosComponent.vue'
 import DelayComponent from '../components/circuit/DelayComponent.vue'
 import ExponentiationComponent from '../components/circuit/ExponentiationComponent.vue'
 import FactorialComponent from '../components/circuit/FactorialComponent.vue'
+import EqualsComponent from '../components/circuit/EqualsComponent.vue'
 
 const componentMap = {
   Adder: AdderComponent,
@@ -53,7 +54,8 @@ const componentMap = {
   Cos: CosComponent,
   Delay: DelayComponent,
   Exponentiation: ExponentiationComponent,
-  Factorial: FactorialComponent
+  Factorial: FactorialComponent,
+  Equals: EqualsComponent
 }
 
 const toast = useToast()
@@ -355,6 +357,10 @@ export const useCircuitStore = defineStore('circuit', {
 
       if (newComponent.name === 'Factorial') {
         // Factorial component has no specific state to initialize here
+      }
+
+      if (newComponent.name === 'Equals') {
+        newComponent.lastSignalTimestamps = {}
       }
 
       this.boardComponents.push(newComponent)
@@ -1268,7 +1274,7 @@ export const useCircuitStore = defineStore('circuit', {
 
         // First, determine the output of each component based on its current inputs.
         this.boardComponents.forEach(component => {
-          const outputPin = (component.name === 'Adder' || component.name === 'And' || component.name === 'Subtract' || component.name === 'Multiply' || component.name === 'Divide' || component.name === 'Xor' || component.name === 'SignalCheck' || component.name === 'Greater' || component.name === 'Abs' || component.name === 'Acos' || component.name === 'Asin' || component.name === 'Atan' || component.name === 'Ceil' || component.name === 'Color' || component.name === 'Concatenation' || component.name === 'Cos' || component.name === 'Delay' || component.name === 'Exponentiation' || component.name === 'Factorial') ? 'SIGNAL_OUT' : 'VALUE_OUT'
+          const outputPin = (component.name === 'Adder' || component.name === 'And' || component.name === 'Subtract' || component.name === 'Multiply' || component.name === 'Divide' || component.name === 'Xor' || component.name === 'SignalCheck' || component.name === 'Greater' || component.name === 'Abs' || component.name === 'Acos' || component.name === 'Asin' || component.name === 'Atan' || component.name === 'Ceil' || component.name === 'Color' || component.name === 'Concatenation' || component.name === 'Cos' || component.name === 'Delay' || component.name === 'Exponentiation' || component.name === 'Factorial' || component.name === 'Equals') ? 'SIGNAL_OUT' : 'VALUE_OUT'
           const key = `${component.id}:${outputPin}`
           const currentValue = outputValues.get(key)
           let newValue
@@ -1295,6 +1301,7 @@ export const useCircuitStore = defineStore('circuit', {
             case 'Delay': newValue = this._processDelayTick(component); break
             case 'Exponentiation': newValue = this._processExponentiationTick(component); break
             case 'Factorial': newValue = this._processFactorialTick(component); break
+            case 'Equals': newValue = this._processEqualsTick(component); break
           }
 
           if (newValue !== undefined && currentValue !== newValue) {
@@ -2497,6 +2504,58 @@ export const useCircuitStore = defineStore('circuit', {
 
         return result
       }
+    },
+
+    /**
+     * Processes a single tick for an Equals component in the circuit simulation.
+     *
+     * Outputs a signal if both inputs are the same.
+     *
+     * @param {Object} component - The Equals component to process.
+     * @returns {string|undefined} The configured output signal.
+     */
+    _processEqualsTick (component) {
+      const { lastSignalTimestamps, settings, inputs } = component
+      const in1 = inputs?.SIGNAL_IN_1
+      const in2 = inputs?.SIGNAL_IN_2
+      const in1Timestamp = lastSignalTimestamps?.SIGNAL_IN_1
+      const in2Timestamp = lastSignalTimestamps?.SIGNAL_IN_2
+      let newValue
+      let conditionMet = false
+
+      if (in1 !== undefined && in2 !== undefined) {
+        if (settings.timeframe > 0) {
+          if (in1Timestamp && in2Timestamp) {
+            const timeDiff = Math.abs(in1Timestamp - in2Timestamp)
+
+            if (timeDiff <= settings.timeframe) {
+              // eslint-disable-next-line eqeqeq
+              if (in1 == in2) {
+                conditionMet = true
+              }
+            }
+          }
+        } else {
+          // eslint-disable-next-line eqeqeq
+          if (in1 == in2) {
+            conditionMet = true
+          }
+        }
+      }
+
+      if (conditionMet) {
+        newValue = inputs?.SET_OUTPUT ?? settings.output
+      } else {
+        newValue = settings.falseOutput
+      }
+
+      if (newValue !== undefined && newValue !== '') {
+        newValue = String(newValue).substring(0, settings.maxOutputLength)
+      } else {
+        newValue = ''
+      }
+
+      return newValue
     },
 
     // --- Import/Export Actions ---
