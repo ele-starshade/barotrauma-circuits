@@ -33,7 +33,7 @@
 import { useCircuitStore } from '../../stores/circuit'
 import ComponentPins from '../ComponentPins.vue'
 
-defineProps({
+const props = defineProps({
   id: String,
   mode: {
     type: String,
@@ -48,4 +48,4 @@ function handleStartWiring (pinName) {
     circuit.startWiring(props.id, pinName)
   }
 }
-</script> 
+</script>

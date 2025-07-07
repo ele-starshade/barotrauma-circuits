@@ -82,4 +82,4 @@ function handleStartWiring (pinName) {
     circuit.startWiring(props.id, pinName)
   }
 }
-</script> 
+</script>
