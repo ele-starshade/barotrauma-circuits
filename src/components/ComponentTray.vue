@@ -64,6 +64,7 @@ const AbsComponent = markRaw(defineAsyncComponent(() => import('./circuit/AbsCom
 const AcosComponent = markRaw(defineAsyncComponent(() => import('./circuit/AcosComponent.vue')))
 const AsinComponent = markRaw(defineAsyncComponent(() => import('./circuit/AsinComponent.vue')))
 const AtanComponent = markRaw(defineAsyncComponent(() => import('./circuit/AtanComponent.vue')))
+const CeilComponent = markRaw(defineAsyncComponent(() => import('./circuit/CeilComponent.vue')))
 
 const circuit = useCircuitStore()
 
@@ -235,6 +236,11 @@ const trayComponents = shallowRef([
     settings: {
       useRadians: false
     }
+  },
+  {
+    name: 'Ceil',
+    is: CeilComponent,
+    value: ''
   }
 ])
 

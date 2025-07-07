@@ -21,6 +21,7 @@ import AbsComponent from '../components/circuit/AbsComponent.vue'
 import AcosComponent from '../components/circuit/AcosComponent.vue'
 import AsinComponent from '../components/circuit/AsinComponent.vue'
 import AtanComponent from '../components/circuit/AtanComponent.vue'
+import CeilComponent from '../components/circuit/CeilComponent.vue'
 
 const componentMap = {
   Adder: AdderComponent,
@@ -38,7 +39,8 @@ const componentMap = {
   Abs: AbsComponent,
   Acos: AcosComponent,
   Asin: AsinComponent,
-  Atan: AtanComponent
+  Atan: AtanComponent,
+  Ceil: CeilComponent
 }
 
 const toast = useToast()
@@ -309,6 +311,10 @@ export const useCircuitStore = defineStore('circuit', {
 
       if (newComponent.name === 'Atan') {
         // Atan component has no specific state to initialize here
+      }
+
+      if (newComponent.name === 'Ceil') {
+        // Ceil component has no specific state to initialize here
       }
 
       this.boardComponents.push(newComponent)
@@ -1222,7 +1228,7 @@ export const useCircuitStore = defineStore('circuit', {
 
         // First, determine the output of each component based on its current inputs.
         this.boardComponents.forEach(component => {
-          const outputPin = (component.name === 'Adder' || component.name === 'And' || component.name === 'Subtract' || component.name === 'Multiply' || component.name === 'Divide' || component.name === 'Xor' || component.name === 'SignalCheck' || component.name === 'Greater' || component.name === 'Abs' || component.name === 'Acos' || component.name === 'Asin' || component.name === 'Atan') ? 'SIGNAL_OUT' : 'VALUE_OUT'
+          const outputPin = (component.name === 'Adder' || component.name === 'And' || component.name === 'Subtract' || component.name === 'Multiply' || component.name === 'Divide' || component.name === 'Xor' || component.name === 'SignalCheck' || component.name === 'Greater' || component.name === 'Abs' || component.name === 'Acos' || component.name === 'Asin' || component.name === 'Atan' || component.name === 'Ceil') ? 'SIGNAL_OUT' : 'VALUE_OUT'
           const key = `${component.id}:${outputPin}`
           const currentValue = outputValues.get(key)
           let newValue
@@ -1242,6 +1248,7 @@ export const useCircuitStore = defineStore('circuit', {
             case 'Acos': newValue = this._processAcosTick(component); break
             case 'Asin': newValue = this._processAsinTick(component); break
             case 'Atan': newValue = this._processAtanTick(component); break
+            case 'Ceil': newValue = this._processCeilTick(component); break
           }
 
           if (newValue !== undefined && currentValue !== newValue) {
@@ -2229,6 +2236,26 @@ export const useCircuitStore = defineStore('circuit', {
       }
 
       return angle
+    },
+
+    /**
+     * Processes a single tick for a Ceil component in the circuit simulation
+     *
+     * Outputs the smallest integer value that is bigger than or equal to the input.
+     *
+     * @param {Object} component - The Ceil component to process
+     * @param {Object} component.inputs - The input signal values
+     * @param {number|string} [component.inputs.SIGNAL_IN] - The input signal
+     * @returns {number|undefined} The ceiling of the input, or undefined if the input is not valid
+     */
+    _processCeilTick (component) {
+      const signalIn = component.inputs?.SIGNAL_IN
+
+      if (signalIn !== undefined) {
+        const num = parseFloat(signalIn) || 0
+
+        return Math.ceil(num)
+      }
     },
 
     // --- Import/Export Actions ---
