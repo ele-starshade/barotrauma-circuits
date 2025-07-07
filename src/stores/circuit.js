@@ -42,6 +42,7 @@ import RegExComponent from '../components/circuit/RegExComponent.vue'
 import RelayComponent from '../components/circuit/RelayComponent.vue'
 import RoundComponent from '../components/circuit/RoundComponent.vue'
 import SinComponent from '../components/circuit/SinComponent.vue'
+import SquareRootComponent from '../components/circuit/SquareRootComponent.vue'
 
 const componentMap = {
   Adder: AdderComponent,
@@ -79,7 +80,8 @@ const componentMap = {
   RegEx: RegExComponent,
   Relay: RelayComponent,
   Round: RoundComponent,
-  Sin: SinComponent
+  Sin: SinComponent,
+  SquareRoot: SquareRootComponent
 }
 
 const toast = useToast()
@@ -438,6 +440,10 @@ export const useCircuitStore = defineStore('circuit', {
 
       if (newComponent.name === 'Sin') {
         // Sin component has no specific state to initialize here
+      }
+
+      if (newComponent.name === 'SquareRoot') {
+        // SquareRoot component has no specific state to initialize here
       }
 
       this.boardComponents.push(newComponent)
@@ -1388,6 +1394,7 @@ export const useCircuitStore = defineStore('circuit', {
             case 'Relay': newValues = this._processRelayTick(component); break
             case 'Round': newValues = this._processRoundTick(component); break
             case 'Sin': newValues = this._processSinTick(component); break
+            case 'SquareRoot': newValues = this._processSquareRootTick(component); break
             case 'Display': this._processDisplayTick(component); break
           }
 
@@ -3150,6 +3157,25 @@ export const useCircuitStore = defineStore('circuit', {
           }
 
           return { SIGNAL_OUT: Math.sin(num) }
+        }
+      }
+
+      return { SIGNAL_OUT: 0 }
+    },
+
+    /**
+     * Processes a single tick for a SquareRoot component.
+     * @param {Object} component The component to process.
+     * @returns {Object|undefined} An object with SIGNAL_OUT.
+     */
+    _processSquareRootTick (component) {
+      const signalIn = component.inputs?.SIGNAL_IN
+
+      if (signalIn !== undefined) {
+        const num = parseFloat(signalIn)
+
+        if (!isNaN(num) && num >= 0) {
+          return { SIGNAL_OUT: Math.sqrt(num) }
         }
       }
 
