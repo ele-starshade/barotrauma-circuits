@@ -40,7 +40,14 @@
  */
 export default function processButtonTick (component) {
   const { settings } = component
-  const outputValue = settings?.output || '1'
-  
-  return { SIGNAL_OUT: outputValue }
-} 
+
+  // Only output when button is pressed
+  if (component.isPressed) {
+    const outputValue = settings?.output || '1'
+
+    return { SIGNAL_OUT: outputValue }
+  }
+
+  // Return undefined when not pressed (no signal)
+  return undefined
+}

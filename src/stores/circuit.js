@@ -407,7 +407,7 @@ export const useCircuitStore = defineStore('circuit', {
       }
 
       if (newComponent.name === 'Button') {
-        // Button component has no specific state to initialize here
+        newComponent.isPressed = false
       }
 
       this.boardComponents.push(newComponent)
@@ -1167,6 +1167,10 @@ export const useCircuitStore = defineStore('circuit', {
           component.isOn = component.settings.isOn
           component.color = component.settings.color
           component.lastToggleState = undefined
+        }
+
+        if (component.name === 'Button') {
+          component.isPressed = false
         }
       })
 

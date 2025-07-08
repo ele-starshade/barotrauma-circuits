@@ -20,8 +20,8 @@
     </div>
     <div class="component-body">
       <div class="button-container">
-        <button 
-          class="circuit-button" 
+        <button
+          class="circuit-button"
           @click="pressButton"
           :class="{ 'pressed': isPressed }"
         >
@@ -75,14 +75,14 @@ const circuit = useCircuitStore()
 const isPressed = ref(false)
 
 const component = computed(() => {
-  return circuit.components.find(c => c.id === props.id)
+  return circuit.boardComponents.find(c => c.id === props.id)
 })
 
 const isSelected = computed(() => {
-  return circuit.selectedComponent?.id === props.id
+  return circuit.selectedComponentId === props.id
 })
 
-function handleWirePinClick(pinName, event) {
+function handleWirePinClick (pinName, event) {
   // Tool components use local wiring handler
   if (circuit.isWiring) {
     circuit.connectWire(pinName, props.id, event)
@@ -91,28 +91,23 @@ function handleWirePinClick(pinName, event) {
   }
 }
 
-function pressButton() {
+function pressButton () {
   if (!component.value) return
-  
-  const outputValue = component.value.settings?.output || '1'
-  
+
   // Set pressed state
   isPressed.value = true
-  
-  // Send output signal
-  circuit.sendSignal(props.id, 'SIGNAL_OUT', outputValue)
-  
+  component.value.isPressed = true
+
   // Reset pressed state after a short delay
   setTimeout(() => {
     isPressed.value = false
-    // Send 0 or empty signal after button release
-    circuit.sendSignal(props.id, 'SIGNAL_OUT', '0')
+    component.value.isPressed = false
   }, 100)
 }
 
-function updateOutput(value) {
+function updateOutput (value) {
   if (!component.value) return
-  
+
   circuit.updateComponentSettings(props.id, {
     ...component.value.settings,
     output: value
@@ -160,4 +155,4 @@ function updateOutput(value) {
   border-color: var(--accent-color);
   box-shadow: 0 0 0 2px rgba(var(--accent-color-rgb), 0.2);
 }
-</style> 
+</style>
