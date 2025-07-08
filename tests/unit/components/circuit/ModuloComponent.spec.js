@@ -15,8 +15,8 @@ describe('ModuloComponent', () => {
     const wrapper = mountWithCircuit(ModuloComponent, { props: { id: 'modulo2', mode: 'board' } })
 
     expect(wrapper.find('.component.text-based').exists()).toBe(true)
-    expect(wrapper.find('[data-pin-name="SIGNAL_IN"]').exists()).toBe(true)
-    expect(wrapper.find('[data-pin-name="SET_MODULUS"]').exists()).toBe(true)
+    expect(wrapper.find('[data-pin-name="SIGNAL_IN_1"]').exists()).toBe(true)
+    expect(wrapper.find('[data-pin-name="SIGNAL_IN_2"]').exists()).toBe(true)
     expect(wrapper.find('[data-pin-name="SIGNAL_OUT"]').exists()).toBe(true)
   })
 

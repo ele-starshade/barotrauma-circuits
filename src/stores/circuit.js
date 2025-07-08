@@ -889,18 +889,8 @@ export const useCircuitStore = defineStore('circuit', {
         const toId = inPinEl.closest('.component').dataset.id
         const toPin = inPinEl.dataset.pinName
 
-        const isSignalInPin = toPin.startsWith('SIGNAL_IN')
-
-        if (isSignalInPin) {
-          const isInputPinOccupied = this.wires.some(w => w.toId === toId && w.toPin === toPin)
-
-          if (isInputPinOccupied) {
-            toast.error('Input pin is already connected.')
-            this.wiringInfo = null
-
-            return
-          }
-        }
+        // Allow multiple connections to any input pin
+        // The aggregation logic will be handled in the tick() function
 
         const outCircleEl = outPinEl.querySelector('.pin-circle')
         const inCircleEl = inPinEl.querySelector('.pin-circle')
@@ -1443,40 +1433,57 @@ export const useCircuitStore = defineStore('circuit', {
         })
 
         // Then, propagate all known outputs through wires to update component inputs.
+        // First, collect all values for each input pin
+        const inputValues = new Map() // Map: componentId:pinName -> array of values
+
         this.wires.forEach(wire => {
           const fromKey = `${wire.fromId}:${wire.fromPin}`
 
           if (outputValues.has(fromKey)) {
             const value = outputValues.get(fromKey)
-            const toComponent = this.boardComponents.find(c => c.id === wire.toId)
+            const inputKey = `${wire.toId}:${wire.toPin}`
 
-            if (toComponent) {
-              if (!toComponent.inputs) toComponent.inputs = {}
+            if (!inputValues.has(inputKey)) {
+              inputValues.set(inputKey, [])
+            }
 
-              const isSignalIn = wire.toPin.startsWith('SIGNAL_IN')
+            inputValues.get(inputKey).push(value)
+          }
+        })
 
-              if (isSignalIn) {
-                if (toComponent.inputs[wire.toPin] !== value) {
-                  toComponent.inputs[wire.toPin] = value
-                  changedInLoop = true // Input changed, may cause downstream changes.
-                }
+        // Now aggregate the input values for each component
+        inputValues.forEach((values, inputKey) => {
+          const [componentId, pinName] = inputKey.split(':')
+          const toComponent = this.boardComponents.find(c => c.id === componentId)
+
+          if (toComponent) {
+            if (!toComponent.inputs) toComponent.inputs = {}
+
+            // Aggregate the values based on component type and pin
+            let aggregatedValue
+
+            if (values.length === 1) {
+              // Single value, no aggregation needed
+              aggregatedValue = values[0]
+            } else {
+              // Multiple values, need to aggregate
+              aggregatedValue = this.aggregateInputValues(toComponent, pinName, values)
+            }
+
+            // Check if the aggregated value is different from current input
+            if (toComponent.inputs[pinName] !== aggregatedValue) {
+              toComponent.inputs[pinName] = aggregatedValue
+              changedInLoop = true // Input changed, may cause downstream changes.
+            }
+
+            // Update signal timestamps for components that track them
+            if (toComponent.name === 'Adder' || toComponent.name === 'And' || toComponent.name === 'Subtract' || toComponent.name === 'Multiply' || toComponent.name === 'Divide' || toComponent.name === 'Xor' || toComponent.name === 'Greater' || toComponent.name === 'Concatenation' || toComponent.name === 'Delay') {
+              if (!toComponent.lastSignalTimestamps) toComponent.lastSignalTimestamps = {}
+
+              if ((toComponent.name === 'And' || toComponent.name === 'Greater' || toComponent.name === 'Xor') && pinName === 'SET_OUTPUT') {
+                // Do nothing here, the value is read directly from inputs in the simulation tick
               } else {
-                // For non-signal pins, we allow multiple connections,
-                // but only the last signal received should be processed.
-                // We'll handle this by assigning the value directly,
-                // and the order of processing will determine the final value.
-                toComponent.inputs[wire.toPin] = value
-                changedInLoop = true
-              }
-
-              if (toComponent.name === 'Adder' || toComponent.name === 'And' || toComponent.name === 'Subtract' || toComponent.name === 'Multiply' || toComponent.name === 'Divide' || toComponent.name === 'Xor' || toComponent.name === 'Greater' || toComponent.name === 'Concatenation' || toComponent.name === 'Delay') {
-                if (!toComponent.lastSignalTimestamps) toComponent.lastSignalTimestamps = {}
-
-                if ((toComponent.name === 'And' || toComponent.name === 'Greater' || toComponent.name === 'Xor') && wire.toPin === 'SET_OUTPUT') {
-                  // Do nothing here, the value is read directly from inputs in the simulation tick
-                } else {
-                  toComponent.lastSignalTimestamps[wire.toPin] = Date.now()
-                }
+                toComponent.lastSignalTimestamps[pinName] = Date.now()
               }
             }
           }
@@ -1521,6 +1528,40 @@ export const useCircuitStore = defineStore('circuit', {
 
       // After calculating all potential outputs, update the state
       this.componentOutputs = new Map(outputValues)
+    },
+
+    /**
+     * Aggregates multiple input values according to Barotrauma's signal aggregation rules
+     *
+     * Barotrauma uses "first signal wins" priority: when multiple wires carry different
+     * signals, the first active signal is used. Empty/null signals are filtered out.
+     *
+     * @param {Object} component - The component receiving the input values
+     * @param {string} pinName - The name of the input pin
+     * @param {Array} values - Array of input values to aggregate
+     * @returns {*} The aggregated value
+     *
+     * @description
+     * This function implements Barotrauma's signal aggregation behavior:
+     * - Filters out undefined/null/empty signals
+     * - Returns the first active signal (first-come-first-served)
+     * - Returns undefined if no active signals exist
+     *
+     * @example
+     * // Aggregate multiple signals - first signal wins
+     * const result = circuitStore.aggregateInputValues(component, 'SIGNAL_IN', ['5', '', '3'])
+     * // Returns: '5' (first active signal)
+     */
+    aggregateInputValues (component, pinName, values) {
+      // Filter out undefined/null/empty signals (Barotrauma behavior)
+      const activeSignals = values.filter(v => v !== undefined && v !== null && v !== '')
+
+      if (activeSignals.length === 0) {
+        return undefined // No signal received
+      }
+
+      // Return the first active signal (first-come-first-served)
+      return activeSignals[0]
     },
 
     // --- Import/Export Actions ---
