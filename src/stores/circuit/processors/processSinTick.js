@@ -7,17 +7,33 @@ export default function processSinTick (component) {
   const { inputs, settings } = component
   const signalIn = inputs?.SIGNAL_IN
 
+  let outputSignal = 0
+
   if (signalIn !== undefined) {
-    let num = parseFloat(signalIn)
+    const num = parseFloat(signalIn)
 
     if (!isNaN(num)) {
+      let angle = num
+
+      // Convert degrees to radians if not using radians
       if (!settings.useRadians) {
-        num = num * (Math.PI / 180) // Convert degrees to radians
+        angle = num * (Math.PI / 180)
       }
 
-      return { SIGNAL_OUT: Math.sin(num) }
+      // Handle special cases
+      if (angle === Infinity || angle === -Infinity) {
+        outputSignal = NaN
+      } else {
+        // Calculate sine value
+        outputSignal = Math.sin(angle)
+
+        // Clamp output to valid range (shouldn't be necessary for sine, but for safety)
+        outputSignal = Math.max(-1, Math.min(1, outputSignal))
+      }
     }
   }
 
-  return { SIGNAL_OUT: 0 }
+  component.value = outputSignal
+
+  return { SIGNAL_OUT: outputSignal }
 }

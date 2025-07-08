@@ -886,9 +886,6 @@ export const useCircuitStore = defineStore('circuit', {
           return
         }
 
-        const toId = inPinEl.closest('.component').dataset.id
-        const toPin = inPinEl.dataset.pinName
-
         // Allow multiple connections to any input pin
         // The aggregation logic will be handled in the tick() function
 

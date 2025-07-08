@@ -4,15 +4,70 @@
  * @returns {Object|undefined} An object with SIGNAL_OUT.
  */
 export default function processRoundTick (component) {
-  const signalIn = component.inputs?.SIGNAL_IN
+  const { inputs, settings } = component
+  const signalIn = inputs?.SIGNAL_IN
+
+  let outputSignal = 0
 
   if (signalIn !== undefined) {
     const num = parseFloat(signalIn)
 
     if (!isNaN(num)) {
-      return { SIGNAL_OUT: Math.round(num) }
+      // Handle special cases
+      if (num === Infinity) {
+        outputSignal = Infinity
+      } else if (num === -Infinity) {
+        outputSignal = -Infinity
+      } else {
+        // Perform standard rounding (half-up)
+        outputSignal = Math.round(num)
+      }
+
+      // Apply time-based processing if configured
+      if (settings.timeFrame > 0) {
+        // Initialize signal history if not exists
+        if (!component.signalHistory) {
+          component.signalHistory = []
+        }
+
+        const currentTime = Date.now()
+
+        // Add current value to history
+        component.signalHistory.push({
+          value: outputSignal,
+          timestamp: currentTime
+        })
+
+        // Remove old entries outside time frame
+        const cutoffTime = currentTime - (settings.timeFrame * 1000)
+
+        component.signalHistory = component.signalHistory.filter(entry =>
+          entry.timestamp >= cutoffTime
+        )
+
+        // Calculate average over time frame
+        if (component.signalHistory.length > 0) {
+          const sum = component.signalHistory.reduce((acc, entry) => acc + entry.value, 0)
+
+          outputSignal = sum / component.signalHistory.length
+        }
+      }
+
+      // Apply clamping if configured
+      if (settings.clampMin !== undefined && settings.clampMax !== undefined) {
+        outputSignal = Math.max(settings.clampMin, Math.min(settings.clampMax, outputSignal))
+      }
+
+      // Apply precision if configured
+      if (settings.precision !== undefined && settings.precision > 0) {
+        const multiplier = Math.pow(10, settings.precision)
+
+        outputSignal = Math.round(outputSignal * multiplier) / multiplier
+      }
     }
   }
 
-  return { SIGNAL_OUT: 0 }
+  component.value = outputSignal
+
+  return { SIGNAL_OUT: outputSignal }
 }

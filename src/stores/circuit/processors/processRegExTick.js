@@ -10,42 +10,51 @@ export default function processRegExTick (component) {
 
   let outputSignal = settings.falseOutput
 
+  // Handle SET_OUTPUT input to override the configured output
+  const currentOutput = setOutput !== undefined ? setOutput : settings.output
+
   if (signalIn !== undefined) {
     let regex
 
     try {
-      regex = new RegExp(settings.expression)
-    } catch (e) {
-      // Invalid regex, treat as no match
-      component.value = settings.falseOutput
+      // Handle empty pattern - always matches
+      if (!settings.expression || settings.expression.trim() === '') {
+        outputSignal = currentOutput
+      } else {
+        regex = new RegExp(settings.expression)
 
-      return { SIGNAL_OUT: settings.falseOutput }
-    }
+        const match = String(signalIn).match(regex)
 
-    const match = String(signalIn).match(regex)
+        if (match) {
+          if (settings.useCaptureGroup) {
+            // Handle capture groups
+            const captureGroups = match.groups ? Object.values(match.groups) : []
+            const firstCapture = captureGroups.length > 0 ? captureGroups[0] : undefined
 
-    if (match) {
-      if (settings.useCaptureGroup) {
-        const captureGroups = match.groups ? Object.values(match.groups) : []
-        const firstCapture = captureGroups.length > 0 ? captureGroups[0] : undefined
-
-        if (firstCapture !== undefined && (firstCapture !== '' || settings.outputEmptyCaptureGroup)) {
-          outputSignal = firstCapture
+            if (firstCapture !== undefined && (firstCapture !== '' || settings.outputEmptyCaptureGroup)) {
+              outputSignal = firstCapture
+            } else {
+              outputSignal = settings.falseOutput
+            }
+          } else {
+            outputSignal = currentOutput
+          }
         } else {
           outputSignal = settings.falseOutput
         }
-      } else {
-        outputSignal = setOutput !== undefined ? setOutput : settings.output
       }
-    } else {
+    } catch (e) {
+      // Invalid regex, treat as no match
       outputSignal = settings.falseOutput
     }
   } else if (settings.continuousOutput) {
-    outputSignal = component.value
+    // Maintain previous output in continuous mode
+    outputSignal = component.value !== undefined ? component.value : settings.falseOutput
   } else {
     outputSignal = settings.falseOutput
   }
 
+  // Apply output length limit if configured
   if (settings.maxOutputLength > -1) {
     outputSignal = String(outputSignal).substring(0, settings.maxOutputLength)
   }

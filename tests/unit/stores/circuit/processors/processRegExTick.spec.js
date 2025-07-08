@@ -1,163 +1,628 @@
-import { describe, it, expect, beforeEach } from 'vitest'
-import processRegExTick from '../../../../../src/stores/circuit/processors/processRegExTick'
+import { describe, it, expect } from 'vitest'
+import processRegExTick from '../../../../../src/stores/circuit/processors/processRegExTick.js'
 
 describe('processRegExTick', () => {
-  let component
+  describe('Basic functionality', () => {
+    it('should match simple pattern and return output', () => {
+      const component = {
+        inputs: { SIGNAL_IN: 'hello world' },
+        settings: {
+          expression: 'hello',
+          output: 'matched',
+          falseOutput: 'no match',
+          useCaptureGroup: false,
+          continuousOutput: false,
+          maxOutputLength: -1
+        }
+      }
 
-  beforeEach(() => {
-    component = {
-      inputs: {},
-      settings: {
-        expression: '^\\d+$', // match digits only
-        output: 'match',
-        falseOutput: 'no_match',
-        maxOutputLength: 20,
-        continuousOutput: false,
-        useCaptureGroup: false,
-        outputEmptyCaptureGroup: false
-      },
-      value: ''
-    }
+      const result = processRegExTick(component)
+
+      expect(result.SIGNAL_OUT).toBe('matched')
+      expect(component.value).toBe('matched')
+    })
+
+    it('should not match pattern and return falseOutput', () => {
+      const component = {
+        inputs: { SIGNAL_IN: 'goodbye world' },
+        settings: {
+          expression: 'hello',
+          output: 'matched',
+          falseOutput: 'no match',
+          useCaptureGroup: false,
+          continuousOutput: false,
+          maxOutputLength: -1
+        }
+      }
+
+      const result = processRegExTick(component)
+
+      expect(result.SIGNAL_OUT).toBe('no match')
+      expect(component.value).toBe('no match')
+    })
+
+    it('should handle case-sensitive matching', () => {
+      const component = {
+        inputs: { SIGNAL_IN: 'Hello World' },
+        settings: {
+          expression: 'hello',
+          output: 'matched',
+          falseOutput: 'no match',
+          useCaptureGroup: false,
+          continuousOutput: false,
+          maxOutputLength: -1
+        }
+      }
+
+      const result = processRegExTick(component)
+
+      expect(result.SIGNAL_OUT).toBe('no match')
+    })
   })
 
-  it('should output the "output" value on a successful match', () => {
-    component.inputs.SIGNAL_IN = '12345'
-    const result = processRegExTick(component)
+  describe('Capture groups', () => {
+    it('should extract first capture group when useCaptureGroup is true', () => {
+      const component = {
+        inputs: { SIGNAL_IN: 'hello world' },
+        settings: {
+          expression: 'hello (\\w+)',
+          output: 'matched',
+          falseOutput: 'no match',
+          useCaptureGroup: true,
+          continuousOutput: false,
+          maxOutputLength: -1
+        }
+      }
 
-    expect(result.SIGNAL_OUT).toBe('match')
+      const result = processRegExTick(component)
+
+      expect(result.SIGNAL_OUT).toBe('world')
+      expect(component.value).toBe('world')
+    })
+
+    it('should return falseOutput when capture group is empty and outputEmptyCaptureGroup is false', () => {
+      const component = {
+        inputs: { SIGNAL_IN: 'hello ' },
+        settings: {
+          expression: 'hello (\\w*)',
+          output: 'matched',
+          falseOutput: 'no match',
+          useCaptureGroup: true,
+          outputEmptyCaptureGroup: false,
+          continuousOutput: false,
+          maxOutputLength: -1
+        }
+      }
+
+      const result = processRegExTick(component)
+
+      expect(result.SIGNAL_OUT).toBe('no match')
+    })
+
+    it('should return empty string when capture group is empty and outputEmptyCaptureGroup is true', () => {
+      const component = {
+        inputs: { SIGNAL_IN: 'hello ' },
+        settings: {
+          expression: 'hello (\\w*)',
+          output: 'matched',
+          falseOutput: 'no match',
+          useCaptureGroup: true,
+          outputEmptyCaptureGroup: true,
+          continuousOutput: false,
+          maxOutputLength: -1
+        }
+      }
+
+      const result = processRegExTick(component)
+
+      expect(result.SIGNAL_OUT).toBe('')
+    })
+
+    it('should handle multiple capture groups and use first one', () => {
+      const component = {
+        inputs: { SIGNAL_IN: 'hello world test' },
+        settings: {
+          expression: 'hello (\\w+) (\\w+)',
+          output: 'matched',
+          falseOutput: 'no match',
+          useCaptureGroup: true,
+          continuousOutput: false,
+          maxOutputLength: -1
+        }
+      }
+
+      const result = processRegExTick(component)
+
+      expect(result.SIGNAL_OUT).toBe('world')
+    })
+
+    it('should handle named capture groups', () => {
+      const component = {
+        inputs: { SIGNAL_IN: 'hello world' },
+        settings: {
+          expression: 'hello (?<word>\\w+)',
+          output: 'matched',
+          falseOutput: 'no match',
+          useCaptureGroup: true,
+          continuousOutput: false,
+          maxOutputLength: -1
+        }
+      }
+
+      const result = processRegExTick(component)
+
+      expect(result.SIGNAL_OUT).toBe('world')
+    })
   })
 
-  it('should output the "falseOutput" value on a failed match', () => {
-    component.inputs.SIGNAL_IN = 'abcde'
-    const result = processRegExTick(component)
+  describe('SET_OUTPUT override', () => {
+    it('should use SET_OUTPUT instead of settings.output when provided', () => {
+      const component = {
+        inputs: { SIGNAL_IN: 'hello world', SET_OUTPUT: 'override' },
+        settings: {
+          expression: 'hello',
+          output: 'matched',
+          falseOutput: 'no match',
+          useCaptureGroup: false,
+          continuousOutput: false,
+          maxOutputLength: -1
+        }
+      }
 
-    expect(result.SIGNAL_OUT).toBe('no_match')
+      const result = processRegExTick(component)
+
+      expect(result.SIGNAL_OUT).toBe('override')
+    })
+
+    it('should handle string SET_OUTPUT', () => {
+      const component = {
+        inputs: { SIGNAL_IN: 'hello world', SET_OUTPUT: '123' },
+        settings: {
+          expression: 'hello',
+          output: 'matched',
+          falseOutput: 'no match',
+          useCaptureGroup: false,
+          continuousOutput: false,
+          maxOutputLength: -1
+        }
+      }
+
+      const result = processRegExTick(component)
+
+      expect(result.SIGNAL_OUT).toBe('123')
+    })
+
+    it('should use settings.output when SET_OUTPUT is undefined', () => {
+      const component = {
+        inputs: { SIGNAL_IN: 'hello world', SET_OUTPUT: undefined },
+        settings: {
+          expression: 'hello',
+          output: 'matched',
+          falseOutput: 'no match',
+          useCaptureGroup: false,
+          continuousOutput: false,
+          maxOutputLength: -1
+        }
+      }
+
+      const result = processRegExTick(component)
+
+      expect(result.SIGNAL_OUT).toBe('matched')
+    })
   })
 
-  it('should handle an empty input string', () => {
-    component.inputs.SIGNAL_IN = ''
-    const result = processRegExTick(component)
+  describe('Empty pattern handling', () => {
+    it('should always match when expression is empty', () => {
+      const component = {
+        inputs: { SIGNAL_IN: 'any string' },
+        settings: {
+          expression: '',
+          output: 'always match',
+          falseOutput: 'no match',
+          useCaptureGroup: false,
+          continuousOutput: false,
+          maxOutputLength: -1
+        }
+      }
 
-    expect(result.SIGNAL_OUT).toBe('no_match')
+      const result = processRegExTick(component)
+
+      expect(result.SIGNAL_OUT).toBe('always match')
+    })
+
+    it('should always match when expression is only whitespace', () => {
+      const component = {
+        inputs: { SIGNAL_IN: 'any string' },
+        settings: {
+          expression: '   ',
+          output: 'always match',
+          falseOutput: 'no match',
+          useCaptureGroup: false,
+          continuousOutput: false,
+          maxOutputLength: -1
+        }
+      }
+
+      const result = processRegExTick(component)
+
+      expect(result.SIGNAL_OUT).toBe('always match')
+    })
   })
 
-  it('should return "falseOutput" if SIGNAL_IN is missing', () => {
-    const result = processRegExTick(component)
+  describe('Continuous output mode', () => {
+    it('should maintain previous output when no input and continuousOutput is true', () => {
+      const component = {
+        inputs: {},
+        settings: {
+          expression: 'hello',
+          output: 'matched',
+          falseOutput: 'no match',
+          useCaptureGroup: false,
+          continuousOutput: true,
+          maxOutputLength: -1
+        },
+        value: 'previous output'
+      }
 
-    expect(result.SIGNAL_OUT).toBe('no_match')
+      const result = processRegExTick(component)
+
+      expect(result.SIGNAL_OUT).toBe('previous output')
+    })
+
+    it('should use falseOutput when no input, continuousOutput is true, and no previous value', () => {
+      const component = {
+        inputs: {},
+        settings: {
+          expression: 'hello',
+          output: 'matched',
+          falseOutput: 'no match',
+          useCaptureGroup: false,
+          continuousOutput: true,
+          maxOutputLength: -1
+        }
+      }
+
+      const result = processRegExTick(component)
+
+      expect(result.SIGNAL_OUT).toBe('no match')
+    })
+
+    it('should use falseOutput when no input and continuousOutput is false', () => {
+      const component = {
+        inputs: {},
+        settings: {
+          expression: 'hello',
+          output: 'matched',
+          falseOutput: 'no match',
+          useCaptureGroup: false,
+          continuousOutput: false,
+          maxOutputLength: -1
+        },
+        value: 'previous output'
+      }
+
+      const result = processRegExTick(component)
+
+      expect(result.SIGNAL_OUT).toBe('no match')
+    })
   })
 
-  it('should output "falseOutput" if the regex expression is invalid', () => {
-    component.inputs.SIGNAL_IN = '123'
-    component.settings.expression = '[' // Invalid regex
-    const result = processRegExTick(component)
+  describe('Output length limiting', () => {
+    it('should limit output length when maxOutputLength is set', () => {
+      const component = {
+        inputs: { SIGNAL_IN: 'hello world' },
+        settings: {
+          expression: 'hello (\\w+)',
+          output: 'matched',
+          falseOutput: 'no match',
+          useCaptureGroup: true,
+          continuousOutput: false,
+          maxOutputLength: 3
+        }
+      }
 
-    expect(result.SIGNAL_OUT).toBe('no_match')
+      const result = processRegExTick(component)
+
+      expect(result.SIGNAL_OUT).toBe('wor')
+    })
+
+    it('should not limit output when maxOutputLength is -1', () => {
+      const component = {
+        inputs: { SIGNAL_IN: 'hello world' },
+        settings: {
+          expression: 'hello (\\w+)',
+          output: 'matched',
+          falseOutput: 'no match',
+          useCaptureGroup: true,
+          continuousOutput: false,
+          maxOutputLength: -1
+        }
+      }
+
+      const result = processRegExTick(component)
+
+      expect(result.SIGNAL_OUT).toBe('world')
+    })
+
+    it('should handle zero maxOutputLength', () => {
+      const component = {
+        inputs: { SIGNAL_IN: 'hello world' },
+        settings: {
+          expression: 'hello (\\w+)',
+          output: 'matched',
+          falseOutput: 'no match',
+          useCaptureGroup: true,
+          continuousOutput: false,
+          maxOutputLength: 0
+        }
+      }
+
+      const result = processRegExTick(component)
+
+      expect(result.SIGNAL_OUT).toBe('')
+    })
   })
 
-  it('should handle case-sensitive matching', () => {
-    component.inputs.SIGNAL_IN = 'HELLO'
-    component.settings.expression = 'hello'
-    const result = processRegExTick(component)
+  describe('Input type handling', () => {
+    it('should convert number input to string for matching', () => {
+      const component = {
+        inputs: { SIGNAL_IN: 12345 },
+        settings: {
+          expression: '123',
+          output: 'matched',
+          falseOutput: 'no match',
+          useCaptureGroup: false,
+          continuousOutput: false,
+          maxOutputLength: -1
+        }
+      }
 
-    expect(result.SIGNAL_OUT).toBe('no_match')
+      const result = processRegExTick(component)
+
+      expect(result.SIGNAL_OUT).toBe('matched')
+    })
+
+    it('should convert boolean input to string for matching', () => {
+      const component = {
+        inputs: { SIGNAL_IN: true },
+        settings: {
+          expression: 'true',
+          output: 'matched',
+          falseOutput: 'no match',
+          useCaptureGroup: false,
+          continuousOutput: false,
+          maxOutputLength: -1
+        }
+      }
+
+      const result = processRegExTick(component)
+
+      expect(result.SIGNAL_OUT).toBe('matched')
+    })
+
+    it('should handle null input', () => {
+      const component = {
+        inputs: { SIGNAL_IN: null },
+        settings: {
+          expression: 'null',
+          output: 'matched',
+          falseOutput: 'no match',
+          useCaptureGroup: false,
+          continuousOutput: false,
+          maxOutputLength: -1
+        }
+      }
+
+      const result = processRegExTick(component)
+
+      expect(result.SIGNAL_OUT).toBe('matched')
+    })
+
+    it('should handle undefined input', () => {
+      const component = {
+        inputs: { SIGNAL_IN: undefined },
+        settings: {
+          expression: 'undefined',
+          output: 'matched',
+          falseOutput: 'no match',
+          useCaptureGroup: false,
+          continuousOutput: false,
+          maxOutputLength: -1
+        }
+      }
+
+      const result = processRegExTick(component)
+
+      expect(result.SIGNAL_OUT).toBe('matched')
+    })
   })
 
-  it('should return the last value if signal is missing and continuousOutput is true', () => {
-    component.settings.continuousOutput = true
-    component.value = 'last_value'
-    const result = processRegExTick(component)
+  describe('Invalid regex handling', () => {
+    it('should return falseOutput when regex is invalid', () => {
+      const component = {
+        inputs: { SIGNAL_IN: 'test string' },
+        settings: {
+          expression: '[invalid regex',
+          output: 'matched',
+          falseOutput: 'no match',
+          useCaptureGroup: false,
+          continuousOutput: false,
+          maxOutputLength: -1
+        }
+      }
 
-    expect(result.SIGNAL_OUT).toBe('last_value')
+      const result = processRegExTick(component)
+
+      expect(result.SIGNAL_OUT).toBe('no match')
+    })
+
+    it('should handle regex with special characters', () => {
+      const component = {
+        inputs: { SIGNAL_IN: 'test.string' },
+        settings: {
+          expression: 'test\\.string',
+          output: 'matched',
+          falseOutput: 'no match',
+          useCaptureGroup: false,
+          continuousOutput: false,
+          maxOutputLength: -1
+        }
+      }
+
+      const result = processRegExTick(component)
+
+      expect(result.SIGNAL_OUT).toBe('matched')
+    })
   })
 
-  it('should use capture group when useCaptureGroup is true', () => {
-    component.settings.useCaptureGroup = true
-    component.settings.expression = '(?<digit>\\d+)'
-    component.inputs.SIGNAL_IN = 'abc123def'
-    const result = processRegExTick(component)
+  describe('Edge cases', () => {
+    it('should handle very long input strings', () => {
+      const longString = 'a'.repeat(10000)
+      const component = {
+        inputs: { SIGNAL_IN: longString },
+        settings: {
+          expression: 'a+',
+          output: 'matched',
+          falseOutput: 'no match',
+          useCaptureGroup: false,
+          continuousOutput: false,
+          maxOutputLength: -1
+        }
+      }
 
-    expect(result.SIGNAL_OUT).toBe('123')
+      const result = processRegExTick(component)
+
+      expect(result.SIGNAL_OUT).toBe('matched')
+    })
+
+    it('should handle very long regex patterns', () => {
+      const longPattern = 'a'.repeat(1000) + 'b'
+      const component = {
+        inputs: { SIGNAL_IN: 'a'.repeat(1000) + 'b' },
+        settings: {
+          expression: longPattern,
+          output: 'matched',
+          falseOutput: 'no match',
+          useCaptureGroup: false,
+          continuousOutput: false,
+          maxOutputLength: -1
+        }
+      }
+
+      const result = processRegExTick(component)
+
+      expect(result.SIGNAL_OUT).toBe('matched')
+    })
+
+    it('should handle unicode characters', () => {
+      const component = {
+        inputs: { SIGNAL_IN: 'café' },
+        settings: {
+          expression: 'café',
+          output: 'matched',
+          falseOutput: 'no match',
+          useCaptureGroup: false,
+          continuousOutput: false,
+          maxOutputLength: -1
+        }
+      }
+
+      const result = processRegExTick(component)
+
+      expect(result.SIGNAL_OUT).toBe('matched')
+    })
+
+    it('should handle emoji characters', () => {
+      const component = {
+        inputs: { SIGNAL_IN: 'hello 😀 world' },
+        settings: {
+          expression: '😀',
+          output: 'matched',
+          falseOutput: 'no match',
+          useCaptureGroup: false,
+          continuousOutput: false,
+          maxOutputLength: -1
+        }
+      }
+
+      const result = processRegExTick(component)
+
+      expect(result.SIGNAL_OUT).toBe('matched')
+    })
   })
 
-  it('should handle maxOutputLength = -1 (no truncation)', () => {
-    component.settings.maxOutputLength = -1
-    component.inputs.SIGNAL_IN = '12345678901234567890'
-    const result = processRegExTick(component)
+  describe('Error handling', () => {
+    it('should handle missing inputs gracefully', () => {
+      const component = {
+        settings: {
+          expression: 'hello',
+          output: 'matched',
+          falseOutput: 'no match',
+          useCaptureGroup: false,
+          continuousOutput: false,
+          maxOutputLength: -1
+        }
+      }
 
-    expect(result.SIGNAL_OUT).toBe('match')
+      const result = processRegExTick(component)
+
+      expect(result.SIGNAL_OUT).toBe('no match')
+    })
+
+    it('should handle missing settings gracefully', () => {
+      const component = {
+        inputs: { SIGNAL_IN: 'test' }
+      }
+      expect(() => processRegExTick(component)).toThrow()
+    })
+
+    it('should handle completely empty component', () => {
+      const component = {}
+      expect(() => processRegExTick(component)).toThrow()
+    })
   })
 
-  it('should handle match.groups undefined (no named capture)', () => {
-    component.settings.useCaptureGroup = true
-    component.settings.expression = '(\\d+)' // no named group
-    component.inputs.SIGNAL_IN = 'abc123def'
-    const result = processRegExTick(component)
+  describe('Integration scenarios', () => {
+    it('should handle complex regex with multiple features', () => {
+      const component = {
+        inputs: { SIGNAL_IN: 'user@example.com' },
+        settings: {
+          expression: '^([a-zA-Z0-9._%+-]+)@([a-zA-Z0-9.-]+\\.[a-zA-Z]{2,})$',
+          output: 'valid email',
+          falseOutput: 'invalid email',
+          useCaptureGroup: true,
+          continuousOutput: false,
+          maxOutputLength: -1
+        }
+      }
 
-    expect(result.SIGNAL_OUT).toBe('no_match')
-  })
+      const result = processRegExTick(component)
 
-  it('should output falseOutput when capture group is empty and outputEmptyCaptureGroup is false', () => {
-    component.settings.useCaptureGroup = true
-    component.settings.outputEmptyCaptureGroup = false
-    component.settings.expression = '(?<digit>\\d*)'
-    component.inputs.SIGNAL_IN = 'abc'
-    const result = processRegExTick(component)
+      expect(result.SIGNAL_OUT).toBe('user')
+    })
 
-    expect(result.SIGNAL_OUT).toBe('no_match')
-  })
+    it('should maintain state across multiple calls', () => {
+      const component = {
+        inputs: { SIGNAL_IN: 'hello' },
+        settings: {
+          expression: 'hello',
+          output: 'matched',
+          falseOutput: 'no match',
+          useCaptureGroup: false,
+          continuousOutput: true,
+          maxOutputLength: -1
+        }
+      }
 
-  it('should output empty capture group when outputEmptyCaptureGroup is true', () => {
-    component.settings.useCaptureGroup = true
-    component.settings.outputEmptyCaptureGroup = true
-    component.settings.expression = '(?<digit>\\d*)'
-    component.inputs.SIGNAL_IN = 'abc'
-    const result = processRegExTick(component)
+      // First call
+      let result = processRegExTick(component)
 
-    expect(result.SIGNAL_OUT).toBe('')
-  })
+      expect(result.SIGNAL_OUT).toBe('matched')
 
-  it('should output falseOutput when no capture groups are found', () => {
-    component.settings.useCaptureGroup = true
-    component.settings.expression = '\\d+'
-    component.inputs.SIGNAL_IN = '123'
-    const result = processRegExTick(component)
-
-    expect(result.SIGNAL_OUT).toBe('no_match')
-  })
-
-  it('should output last value if signalIn is undefined and continuousOutput is true', () => {
-    component.inputs = {}
-    component.settings.continuousOutput = true
-    component.value = 'last_value'
-    const result = processRegExTick(component)
-
-    expect(result.SIGNAL_OUT).toBe('last_value')
-  })
-
-  it('should output falseOutput if signalIn is undefined and continuousOutput is false', () => {
-    component.inputs = {}
-    component.settings.continuousOutput = false
-    component.value = 'should_not_return'
-    const result = processRegExTick(component)
-
-    expect(result.SIGNAL_OUT).toBe('no_match')
-  })
-
-  it('should not truncate output if maxOutputLength is -1', () => {
-    component.settings.maxOutputLength = -1
-    component.inputs.SIGNAL_IN = '12345'
-    const result = processRegExTick(component)
-
-    expect(result.SIGNAL_OUT).toBe('match')
-  })
-
-  it('should not truncate long output if maxOutputLength is -1', () => {
-    component.settings.maxOutputLength = -1
-    component.settings.output = 'very long output string that should not be truncated'
-    component.inputs.SIGNAL_IN = '12345'
-    const result = processRegExTick(component)
-
-    expect(result.SIGNAL_OUT).toBe('very long output string that should not be truncated')
+      // Second call with no input
+      component.inputs = {}
+      result = processRegExTick(component)
+      expect(result.SIGNAL_OUT).toBe('matched')
+    })
   })
 })

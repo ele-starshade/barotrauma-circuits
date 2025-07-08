@@ -1,91 +1,129 @@
 /**
  * Processes a single tick for an And component during circuit simulation
  *
- * Evaluates logical AND operation between two input signals with configurable
- * output values and timing constraints. The component outputs different values
- * based on whether both inputs are truthy (non-zero, non-empty, non-undefined)
- * within a specified timeframe.
+ * Evaluates logical AND operation between two input signals. The component outputs
+ * different values based on whether both inputs are active (truthy).
+ * SET_OUTPUT can override the normal AND logic.
  *
  * @param {Object} component - The And component to process
  * @param {Object} component.inputs - The input signal values
  * @param {*} component.inputs.SIGNAL_IN_1 - First input signal value
  * @param {*} component.inputs.SIGNAL_IN_2 - Second input signal value
- * @param {Object} component.lastSignalTimestamps - Timestamps of last signal updates
- * @param {number} component.lastSignalTimestamps.SIGNAL_IN_1 - Timestamp of first input signal
- * @param {number} component.lastSignalTimestamps.SIGNAL_IN_2 - Timestamp of second input signal
+ * @param {*} component.inputs.SET_OUTPUT - Override output value (optional)
  * @param {Object} component.settings - Component configuration settings
- * @param {number} component.settings.timeframe - Maximum time difference allowed between signals (0.0 = no limit)
- * @param {string} component.settings.output - Output value when both inputs are truthy
- * @param {string} component.settings.falseOutput - Output value when condition is not met
+ * @param {string} component.settings.output - Output value when both inputs are active (default: "1")
+ * @param {string} component.settings.falseOutput - Output value when condition is not met (default: "0")
  * @param {number} component.settings.maxOutputLength - Maximum length of output string
- * @returns {string} The output value based on logical AND evaluation, or empty string if condition not met
- *
- * @description
- * This function performs the following operations:
- * 1. Validates that input signals have valid timestamps
- * 2. Checks if the time difference between input signals is within the configured timeframe
- * 3. Evaluates whether both inputs are truthy (non-zero, non-empty, non-undefined)
- * 4. Returns the configured output value if both inputs are truthy within timeframe
- * 5. Returns the configured falseOutput value if condition is not met
- * 6. Truncates output to maxOutputLength if specified
- *
- * The function ensures signal synchronization by validating timestamps and timeframes,
- * preventing processing of stale or mismatched input signals. If the timeframe is set
- * to 0.0, no time validation is performed.
- *
- * Truthy evaluation considers values that are not undefined, empty strings, or zero.
- * The returned value will be propagated to any components connected to this
- * And component's output pin.
+ * @returns {Object} Object with SIGNAL_OUT containing the result
  *
  * @example
- * // Process an And component with truthy inputs
+ * // Process an And component with active inputs
  * const component = {
- *   id: 'and-1',
- *   name: 'And',
  *   inputs: { SIGNAL_IN_1: 5, SIGNAL_IN_2: 'hello' },
- *   lastSignalTimestamps: { SIGNAL_IN_1: 1640995200000, SIGNAL_IN_2: 1640995200001 },
- *   settings: { timeframe: 100, output: 'TRUE', falseOutput: 'FALSE', maxOutputLength: 10 }
+ *   settings: { output: '1', falseOutput: '0', maxOutputLength: 10 }
  * }
- * const result = circuitStore._processAndTick(component)
- * console.log(result) // 'TRUE'
+ * const result = processAndTick(component)
+ * console.log(result.SIGNAL_OUT) // '1'
  */
 export default function processAndTick (component) {
-  const { lastSignalTimestamps, settings, inputs } = component
+  const { settings, inputs } = component
   const in1 = inputs?.SIGNAL_IN_1
   const in2 = inputs?.SIGNAL_IN_2
-  const in1Timestamp = lastSignalTimestamps?.SIGNAL_IN_1
-  const in2Timestamp = lastSignalTimestamps?.SIGNAL_IN_2
-  let newValue
+  const setOutput = inputs?.SET_OUTPUT
 
-  // eslint-disable-next-line eqeqeq
-  const in1Truthy = in1 != undefined && in1 != '' && in1 != 0
-  // eslint-disable-next-line eqeqeq
-  const in2Truthy = in2 != undefined && in2 != '' && in2 != 0
+  // Handle SET_OUTPUT override
+  if (setOutput !== null && setOutput !== undefined && setOutput !== '') {
+    let outputValue = String(setOutput)
 
-  let conditionMet = false
-
-  if (in1Timestamp && in2Timestamp) {
-    const timeDiff = Math.abs(in1Timestamp - in2Timestamp)
-
-    if (settings.timeframe === 0.0 || timeDiff <= settings.timeframe) {
-      conditionMet = (in1Truthy && in2Truthy)
+    if (settings?.maxOutputLength > 0) {
+      outputValue = outputValue.substring(0, settings.maxOutputLength)
     }
-  } else if (in1Timestamp || in2Timestamp) {
-    conditionMet = (in1Truthy && in2Truthy)
+
+    return { SIGNAL_OUT: outputValue }
   }
+
+  // Check if inputs are active using proper signal activity detection
+  const input1Active = isSignalActive(in1)
+  const input2Active = isSignalActive(in2)
+
+  // Both inputs must be active for AND logic
+  let conditionMet = input1Active && input2Active
+
+  // --- Timeframe logic start ---
+  if (settings?.timeFrame > 0) {
+    if (!component.signalHistory) {
+      component.signalHistory = []
+    }
+
+    const currentTime = Date.now()
+
+    // Add current result to history
+    component.signalHistory.push({
+      value: conditionMet ? 1 : 0,
+      timestamp: currentTime
+    })
+    // Remove old entries outside time frame
+    const cutoffTime = currentTime - (settings.timeFrame * 1000)
+
+    component.signalHistory = component.signalHistory.filter(entry => entry.timestamp >= cutoffTime)
+    // Calculate average over time frame
+    if (component.signalHistory.length > 0) {
+      const sum = component.signalHistory.reduce((acc, entry) => acc + entry.value, 0)
+      const average = sum / component.signalHistory.length
+
+      conditionMet = average > 0.5
+    }
+  }
+  // --- Timeframe logic end ---
+
+  // Determine output value
+  let outputValue
 
   if (conditionMet) {
-    newValue = settings.output
+    outputValue = settings?.output || '1'
   } else {
-    newValue = settings.falseOutput
+    outputValue = settings?.falseOutput || '0'
   }
 
-  if (newValue !== undefined && newValue !== '') {
-    newValue = String(newValue).substring(0, settings.maxOutputLength)
-  } else {
-    // Ensure we send an empty string if falseOutput is empty, rather than undefined
-    newValue = ''
+  // Apply length limit if configured
+  if (settings?.maxOutputLength > 0) {
+    outputValue = String(outputValue).substring(0, settings.maxOutputLength)
   }
 
-  return { SIGNAL_OUT: newValue }
+  return { SIGNAL_OUT: outputValue }
+}
+
+/**
+ * Determines if a signal is considered "active"
+ *
+ * @param {string|number|boolean} signal - The signal to check
+ * @returns {boolean} True if signal is active
+ */
+function isSignalActive (signal) {
+  if (signal === null || signal === undefined || signal === '') {
+    return false
+  }
+
+  // Convert to string for consistent checking
+  const signalStr = String(signal).toLowerCase()
+
+  // Check for common "false" values
+  if (signalStr === 'false' || signalStr === '0' || signalStr === 'no' || signalStr === 'off') {
+    return false
+  }
+
+  // Check for common "true" values
+  if (signalStr === 'true' || signalStr === '1' || signalStr === 'yes' || signalStr === 'on') {
+    return true
+  }
+
+  // For numeric values, check if non-zero
+  const numValue = Number(signal)
+
+  if (!isNaN(numValue)) {
+    return numValue !== 0
+  }
+
+  // For other values, consider non-empty strings as active
+  return signalStr.length > 0
 }

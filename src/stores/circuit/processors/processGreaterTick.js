@@ -1,93 +1,95 @@
 /**
  * Processes a single tick for the Greater component
  *
- * Evaluates whether the first input signal is greater than the second input signal,
- * considering timing constraints and returning appropriate output values based on
- * the comparison result and configured settings.
+ * Evaluates whether the first input signal is greater than the second input signal.
+ * Returns 1 if signal_in1 > signal_in2, otherwise returns 0.
+ * Handles special cases and invalid inputs gracefully.
+ * Non-numeric inputs are handled by converting to numbers.
  *
  * @param {Object} component - The Greater component to process
- * @param {Object} component.lastSignalTimestamps - Timestamps of when signals were last received
- * @param {number} component.lastSignalTimestamps.SIGNAL_IN_1 - Timestamp of first input signal
- * @param {number} component.lastSignalTimestamps.SIGNAL_IN_2 - Timestamp of second input signal
- * @param {Object} component.settings - Component configuration settings
- * @param {number} component.settings.timeframe - Maximum time difference allowed between signals (0.0 = no limit)
- * @param {string} component.settings.output - Output value when condition is met
- * @param {string} component.settings.falseOutput - Output value when condition is not met
- * @param {number} component.settings.maxOutputLength - Maximum length of output string
  * @param {Object} component.inputs - Current input signal values
  * @param {string|number} component.inputs.SIGNAL_IN_1 - First input signal value
  * @param {string|number} component.inputs.SIGNAL_IN_2 - Second input signal value
- * @param {string} [component.inputs.SET_OUTPUT] - Optional override for output when condition is met
- * @returns {string} The output value based on the comparison result, truncated to maxOutputLength
- *
- * @description
- * This function performs the following operations:
- * - Extracts input signals and their timestamps from the component
- * - Validates that both input signals and timestamps are available
- * - Calculates the time difference between signal arrivals
- * - Checks if the time difference is within the configured timeframe (or if timeframe is 0.0 for no limit)
- * - Converts input signals to numbers and compares them numerically
- * - Returns the configured output value if SIGNAL_IN_1 > SIGNAL_IN_2, otherwise returns falseOutput
- * - Supports dynamic output override through the SET_OUTPUT input pin
- * - Truncates the output to the maximum configured length
- * - Returns an empty string if no valid comparison can be made
- *
- * The function supports dynamic overrides through input pins:
- * - SET_OUTPUT: Overrides the default output value when the condition is met
+ * @param {string|number} [component.inputs.SET_OUTPUT] - Optional override for output when condition is met
+ * @param {Object} component.settings - Component configuration settings
+ * @param {number} [component.settings.timeFrame] - Time frame for signal processing (default: 0)
+ * @param {number} [component.settings.hysteresis] - Hysteresis value to prevent oscillation (default: 0)
+ * @param {string} [component.settings.outputFormat] - Output format: 'numeric' or 'boolean' (default: 'numeric')
+ * @returns {Object} Object with SIGNAL_OUT containing the comparison result
  *
  * @example
- * // Process a Greater component with valid signals and timeframe
+ * // Basic comparison
  * const component = {
- *   lastSignalTimestamps: { SIGNAL_IN_1: 1000, SIGNAL_IN_2: 1050 },
- *   settings: { timeframe: 100, output: "GREATER", falseOutput: "NOT_GREATER", maxOutputLength: 10 },
- *   inputs: { SIGNAL_IN_1: "15", SIGNAL_IN_2: "10" }
+ *   inputs: { SIGNAL_IN_1: 5, SIGNAL_IN_2: 3 },
+ *   settings: { outputFormat: 'numeric' }
  * }
- * const result = circuitStore._processGreaterTick(component)
- * console.log(result) // "GREATER"
+ * const result = processGreaterTick(component)
+ * console.log(result.SIGNAL_OUT) // 1
  *
  * @example
- * // Process a Greater component with signals outside timeframe
+ * // Equal values
  * const component = {
- *   lastSignalTimestamps: { SIGNAL_IN_1: 1000, SIGNAL_IN_2: 1200 },
- *   settings: { timeframe: 100, output: "GREATER", falseOutput: "NOT_GREATER", maxOutputLength: 10 },
- *   inputs: { SIGNAL_IN_1: "15", SIGNAL_IN_2: "10" }
+ *   inputs: { SIGNAL_IN_1: 5, SIGNAL_IN_2: 5 },
+ *   settings: { outputFormat: 'numeric' }
  * }
- * const result = circuitStore._processGreaterTick(component)
- * console.log(result) // "NOT_GREATER"
+ * const result = processGreaterTick(component)
+ * console.log(result.SIGNAL_OUT) // 0
  */
 export default function processGreaterTick (component) {
-  const { lastSignalTimestamps, settings, inputs } = component
+  const { settings, inputs } = component
   const in1 = inputs?.SIGNAL_IN_1
   const in2 = inputs?.SIGNAL_IN_2
-  const in1Timestamp = lastSignalTimestamps?.SIGNAL_IN_1
-  const in2Timestamp = lastSignalTimestamps?.SIGNAL_IN_2
-  let newValue
-  let conditionMet = false
+  const setOutput = inputs?.SET_OUTPUT
 
-  if (in1 !== undefined && in2 !== undefined && in1Timestamp && in2Timestamp) {
-    const timeDiff = Math.abs(in1Timestamp - in2Timestamp)
+  // Handle null/undefined/empty inputs as 0
+  const input1 = (in1 === null || in1 === undefined || in1 === '') ? 0 : in1
+  const input2 = (in2 === null || in2 === undefined || in2 === '') ? 0 : in2
 
-    if (settings.timeframe === 0.0 || timeDiff <= settings.timeframe) {
-      const num1 = parseFloat(in1) || 0
-      const num2 = parseFloat(in2) || 0
+  try {
+    // Convert to numbers
+    const num1 = Number(input1)
+    const num2 = Number(input2)
 
-      if (num1 > num2) {
-        conditionMet = true
-      }
+    if (isNaN(num1) || isNaN(num2)) {
+      // If either input cannot be converted to number, return 0
+      return { SIGNAL_OUT: 0 }
     }
-  }
 
-  if (conditionMet) {
-    newValue = inputs?.SET_OUTPUT ?? settings.output
-  } else {
-    newValue = settings.falseOutput
-  }
+    // Handle special cases
+    if (!isFinite(num1) || !isFinite(num2)) {
+      // Handle infinity cases
+      if (num1 === Infinity && num2 !== Infinity) return { SIGNAL_OUT: 1 }
 
-  if (newValue !== undefined && newValue !== '') {
-    newValue = String(newValue).substring(0, settings.maxOutputLength)
-  } else {
-    newValue = ''
-  }
+      if (num1 === -Infinity) return { SIGNAL_OUT: 0 }
 
-  return { SIGNAL_OUT: newValue }
+      if (num2 === Infinity) return { SIGNAL_OUT: 0 }
+
+      if (num2 === -Infinity && num1 !== -Infinity) return { SIGNAL_OUT: 1 }
+
+      return { SIGNAL_OUT: 0 } // Both infinite, same sign
+    }
+
+    // Perform comparison
+    const isGreater = num1 > num2
+
+    // Format output based on configuration
+    const outputFormat = settings?.outputFormat ?? 'numeric'
+    let result
+
+    if (outputFormat === 'boolean') {
+      result = isGreater
+    } else {
+      result = isGreater ? 1 : 0
+    }
+
+    // Apply SET_OUTPUT override if provided and condition is met
+    if (setOutput !== null && setOutput !== undefined && isGreater) {
+      result = setOutput
+    }
+
+    return { SIGNAL_OUT: result }
+  } catch (error) {
+    // If calculation fails, return 0
+    return { SIGNAL_OUT: 0 }
+  }
 }

@@ -55,18 +55,28 @@ export default function processSignalCheckTick (component) {
   let newValue
 
   if (signalIn !== undefined) {
+    // Perform exact equality comparison (type-sensitive)
     if (signalIn === targetSignal) {
       newValue = output
     } else {
       newValue = settings.falseOutput
     }
+  } else {
+    // No input signal - output false output
+    newValue = settings.falseOutput
   }
 
-  if (newValue !== undefined && newValue !== '') {
-    newValue = String(newValue).substring(0, settings.maxOutputLength)
+  // Convert to string and apply length limit
+  if (newValue !== undefined && newValue !== null) {
+    newValue = String(newValue)
+    if (settings.maxOutputLength > 0) {
+      newValue = newValue.substring(0, settings.maxOutputLength)
+    }
   } else {
     newValue = ''
   }
+
+  component.value = newValue
 
   return { SIGNAL_OUT: newValue }
 }

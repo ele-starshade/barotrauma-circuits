@@ -2,92 +2,132 @@
  * Processes a single tick for an XOR component in the circuit simulation
  *
  * Evaluates the XOR logic operation on two input signals and determines the appropriate
- * output based on whether the inputs have different truthiness values. The function
- * supports time-based signal validation and configurable output values.
+ * output based on whether exactly one input is above the threshold. The function
+ * supports configurable output values and threshold-based logic.
  *
  * @param {Object} component - The XOR component to process
  * @param {Object} component.inputs - The input signals for the component
  * @param {*} component.inputs.SIGNAL_IN_1 - The first input signal
  * @param {*} component.inputs.SIGNAL_IN_2 - The second input signal
  * @param {*} component.inputs.SET_OUTPUT - Optional override for the output value when condition is met
- * @param {Object} component.lastSignalTimestamps - Timestamps of when each input signal was last received
- * @param {number} component.lastSignalTimestamps.SIGNAL_IN_1 - Timestamp of the first input signal
- * @param {number} component.lastSignalTimestamps.SIGNAL_IN_2 - Timestamp of the second input signal
  * @param {Object} component.settings - Configuration settings for the component
- * @param {number} component.settings.timeframe - Maximum time difference (ms) between inputs to consider them synchronized (0.0 disables time constraint)
+ * @param {number} component.settings.threshold - Signal threshold for logical operations (default: 0.5)
+ * @param {number} component.settings.hysteresis - Hysteresis band to prevent oscillation (default: 0.1)
  * @param {string} component.settings.output - Default output value when XOR condition is met
  * @param {string} component.settings.falseOutput - Output value when XOR condition is not met
  * @param {number} component.settings.maxOutputLength - Maximum length for the output string
- * @returns {string} The processed output value, or empty string if no valid output
+ * @returns {string} The processed output value
  *
  * @description
  * This function performs the following operations:
- * - Extracts input signals and their timestamps from the component
- * - Determines the truthiness of each input (truthy if not undefined, not empty string, and not 0)
- * - Validates input timing if both timestamps are present and timeframe is configured
- * - Evaluates XOR logic: condition is met when inputs have different truthiness values
+ * - Extracts input signals from the component
+ * - Applies threshold to convert inputs to binary values
+ * - Uses hysteresis to prevent oscillation near threshold
+ * - Evaluates XOR logic: condition is met when exactly one input is above threshold
  * - Selects appropriate output based on whether the XOR condition is met
  * - Applies output length restrictions and string conversion
- * - Returns the final output value or empty string
+ * - Returns the final output value
  *
  * The XOR logic works as follows:
- * - If both inputs are truthy or both are falsy → condition not met (falseOutput)
- * - If one input is truthy and the other is falsy → condition met (output)
- *
- * Time validation ensures inputs are processed within the specified timeframe.
- * If timeframe is 0.0, time constraints are ignored and processing occurs
- * whenever at least one input is available.
+ * - If both inputs are above threshold or both are below threshold → condition not met (falseOutput)
+ * - If exactly one input is above threshold → condition met (output)
  *
  * @example
- * // Process an XOR component with truthy and falsy inputs
+ * // Process an XOR component with one input above threshold
  * const component = {
- *   inputs: { SIGNAL_IN_1: "hello", SIGNAL_IN_2: 0 },
- *   lastSignalTimestamps: { SIGNAL_IN_1: 1640995200000, SIGNAL_IN_2: 1640995200001 },
- *   settings: { timeframe: 100, output: "XOR_TRUE", falseOutput: "XOR_FALSE", maxOutputLength: 10 }
+ *   inputs: { SIGNAL_IN_1: 0.8, SIGNAL_IN_2: 0.2 },
+ *   settings: { threshold: 0.5, output: "XOR_TRUE", falseOutput: "XOR_FALSE", maxOutputLength: 10 }
  * }
- * const result = circuitStore._processXorTick(component)
- * console.log(result) // "XOR_TRUE"
+ * const result = processXorTick(component)
+ * console.log(result) // { SIGNAL_OUT: "XOR_TRUE" }
  */
 export default function processXorTick (component) {
-  const { lastSignalTimestamps, settings, inputs } = component
+  const { settings, inputs } = component
   const in1 = inputs?.SIGNAL_IN_1
   const in2 = inputs?.SIGNAL_IN_2
-  const in1Timestamp = lastSignalTimestamps?.SIGNAL_IN_1
-  const in2Timestamp = lastSignalTimestamps?.SIGNAL_IN_2
-  let newValue
+  const setOutput = inputs?.SET_OUTPUT
 
-  // eslint-disable-next-line eqeqeq
-  const in1Truthy = in1 != undefined && in1 != '' && in1 != 0
-  // eslint-disable-next-line eqeqeq
-  const in2Truthy = in2 != undefined && in2 != '' && in2 != 0
+  let outputSignal = settings.falseOutput
 
-  let conditionMet = false
+  if (in1 !== undefined && in2 !== undefined) {
+    const threshold = settings.threshold || 0.5
+    const hysteresis = settings.hysteresis || 0.1
 
-  if (in1Timestamp && in2Timestamp) {
-    const timeDiff = Math.abs(in1Timestamp - in2Timestamp)
+    // Convert inputs to numbers
+    const num1 = parseFloat(in1) || 0
+    const num2 = parseFloat(in2) || 0
 
-    if (settings.timeframe === 0.0 || timeDiff <= settings.timeframe) {
-      if (in1Truthy !== in2Truthy) {
-        conditionMet = true
+    // Apply hysteresis to prevent oscillation
+    let binary1, binary2
+
+    if (Math.abs(num1 - threshold) < hysteresis) {
+      // Use previous state for input 1 if near threshold
+      binary1 = component.hysteresisState1 !== undefined ? component.hysteresisState1 : (num1 > threshold ? 1 : 0)
+    } else {
+      binary1 = num1 > threshold ? 1 : 0
+    }
+
+    if (Math.abs(num2 - threshold) < hysteresis) {
+      // Use previous state for input 2 if near threshold
+      binary2 = component.hysteresisState2 !== undefined ? component.hysteresisState2 : (num2 > threshold ? 1 : 0)
+    } else {
+      binary2 = num2 > threshold ? 1 : 0
+    }
+
+    // Store hysteresis states
+    component.hysteresisState1 = binary1
+    component.hysteresisState2 = binary2
+
+    // Perform XOR operation
+    let xorResult = binary1 ^ binary2
+
+    // --- Timeframe logic start ---
+    if (settings.timeFrame > 0) {
+      if (!component.signalHistory) {
+        component.signalHistory = []
+      }
+
+      const currentTime = Date.now()
+
+      // Add current result to history
+      component.signalHistory.push({
+        value: xorResult,
+        timestamp: currentTime
+      })
+      // Remove old entries outside time frame
+      const cutoffTime = currentTime - (settings.timeFrame * 1000)
+
+      component.signalHistory = component.signalHistory.filter(entry => entry.timestamp >= cutoffTime)
+      // Calculate average over time frame
+      if (component.signalHistory.length > 0) {
+        const sum = component.signalHistory.reduce((acc, entry) => acc + entry.value, 0)
+        const average = sum / component.signalHistory.length
+
+        xorResult = average > 0.5 ? 1 : 0
       }
     }
-  } else if (in1Timestamp || in2Timestamp) {
-    if (in1Truthy !== in2Truthy) {
-      conditionMet = true
+    // --- Timeframe logic end ---
+
+    if (xorResult === 1) {
+      // Exactly one input is above threshold
+      outputSignal = setOutput !== undefined ? setOutput : settings.output
+    } else {
+      // Both inputs are above threshold or both are below threshold
+      outputSignal = settings.falseOutput
     }
   }
 
-  if (conditionMet) {
-    newValue = inputs?.SET_OUTPUT ?? settings.output
+  // Apply output length limit
+  if (outputSignal !== undefined && outputSignal !== null) {
+    outputSignal = String(outputSignal)
+    if (settings.maxOutputLength > 0) {
+      outputSignal = outputSignal.substring(0, settings.maxOutputLength)
+    }
   } else {
-    newValue = settings.falseOutput
+    outputSignal = ''
   }
 
-  if (newValue !== undefined && newValue !== '') {
-    newValue = String(newValue).substring(0, settings.maxOutputLength)
-  } else {
-    newValue = ''
-  }
+  component.value = outputSignal
 
-  return { SIGNAL_OUT: newValue }
+  return { SIGNAL_OUT: outputSignal }
 }

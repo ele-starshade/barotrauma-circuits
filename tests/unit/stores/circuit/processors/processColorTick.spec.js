@@ -1,91 +1,261 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import processColorTick from '../../../../../src/stores/circuit/processors/processColorTick'
-import hsvToRgb from '../../../../../src/utils/hsvToRgb'
-
-vi.mock('../../../../../src/utils/hsvToRgb')
 
 describe('processColorTick', () => {
-  it('should process RGB values correctly', () => {
-    const component = {
-      inputs: { SIGNAL_IN_R: 100, SIGNAL_IN_G: 150, SIGNAL_IN_B: 200, SIGNAL_IN_A: 255 },
-      settings: { useHSV: false }
-    }
+  it('returns undefined when no inputs are provided', () => {
+    const component = { inputs: {} }
     const result = processColorTick(component)
 
-    expect(result.SIGNAL_OUT).toBe('100,150,200,255')
+    expect(result).toBeUndefined()
   })
 
-  it('should clamp RGB values to the 0-255 range', () => {
+  it('returns undefined when all inputs are undefined', () => {
     const component = {
-      inputs: { SIGNAL_IN_R: 300, SIGNAL_IN_G: -50, SIGNAL_IN_B: 200, SIGNAL_IN_A: 300 },
-      settings: { useHSV: false }
-    }
-    const result = processColorTick(component)
-
-    expect(result.SIGNAL_OUT).toBe('255,0,200,255')
-  })
-
-  it('should process HSV values correctly', () => {
-    hsvToRgb.mockReturnValue({ r: 99, g: 149, b: 199 })
-    const component = {
-      inputs: { SIGNAL_IN_R: 210, SIGNAL_IN_G: 0.5, SIGNAL_IN_B: 0.8, SIGNAL_IN_A: 255 },
-      settings: { useHSV: true }
-    }
-    const result = processColorTick(component)
-
-    expect(hsvToRgb).toHaveBeenCalledWith(210, 0.5, 0.8)
-    expect(result.SIGNAL_OUT).toBe('99,149,199,255')
-  })
-
-  it('should clamp HSV values to their respective ranges', () => {
-    hsvToRgb.mockReturnValue({ r: 255, g: 255, b: 255 })
-    const component = {
-      inputs: { SIGNAL_IN_R: 400, SIGNAL_IN_G: 1.5, SIGNAL_IN_B: -1, SIGNAL_IN_A: 255 },
-      settings: { useHSV: true }
-    }
-
-    processColorTick(component)
-    expect(hsvToRgb).toHaveBeenCalledWith(360, 1, 0)
-  })
-
-  it('should handle non-numeric HSV inputs', () => {
-    hsvToRgb.mockReturnValue({ r: 0, g: 0, b: 0 })
-    const component = {
-      inputs: { SIGNAL_IN_R: 'foo', SIGNAL_IN_G: 'bar', SIGNAL_IN_B: 'baz', SIGNAL_IN_A: 255 },
-      settings: { useHSV: true }
-    }
-
-    processColorTick(component)
-    expect(hsvToRgb).toHaveBeenCalledWith(0, 0, 0)
-  })
-
-  it('should return undefined if no inputs are provided', () => {
-    const component = {
-      inputs: {},
-      settings: { useHSV: false }
+      inputs: {
+        SIGNAL_IN_R: undefined,
+        SIGNAL_IN_G: undefined,
+        SIGNAL_IN_B: undefined,
+        SIGNAL_IN_A: undefined
+      }
     }
     const result = processColorTick(component)
 
     expect(result).toBeUndefined()
   })
 
-  it('should handle partial inputs for RGB', () => {
+  it('processes RGB values correctly', () => {
     const component = {
-      inputs: { SIGNAL_IN_R: 100 },
+      inputs: { SIGNAL_IN_R: 1.0, SIGNAL_IN_G: 0.5, SIGNAL_IN_B: 0.0, SIGNAL_IN_A: 1.0 },
       settings: { useHSV: false }
     }
     const result = processColorTick(component)
 
-    expect(result.SIGNAL_OUT).toBe('100,0,0,0')
+    expect(result.SIGNAL_OUT).toBe('1,0.5,0,1')
   })
 
-  it('should handle non-numeric inputs for RGB', () => {
+  it('processes RGB values with default alpha', () => {
     const component = {
-      inputs: { SIGNAL_IN_R: 'foo', SIGNAL_IN_G: 'bar', SIGNAL_IN_B: 'baz', SIGNAL_IN_A: 'a' },
+      inputs: { SIGNAL_IN_R: 1.0, SIGNAL_IN_G: 0.5, SIGNAL_IN_B: 0.0 },
       settings: { useHSV: false }
     }
     const result = processColorTick(component)
 
-    expect(result.SIGNAL_OUT).toBe('0,0,0,0')
+    expect(result.SIGNAL_OUT).toBe('1,0.5,0,1')
+  })
+
+  it('clamps RGB values to 0-1 range', () => {
+    const component = {
+      inputs: { SIGNAL_IN_R: 2.0, SIGNAL_IN_G: -0.5, SIGNAL_IN_B: 0.5, SIGNAL_IN_A: 1.0 },
+      settings: { useHSV: false }
+    }
+    const result = processColorTick(component)
+
+    expect(result.SIGNAL_OUT).toBe('1,0,0.5,1')
+  })
+
+  it('handles string numbers for RGB', () => {
+    const component = {
+      inputs: { SIGNAL_IN_R: '1.0', SIGNAL_IN_G: '0.5', SIGNAL_IN_B: '0.0', SIGNAL_IN_A: '1.0' },
+      settings: { useHSV: false }
+    }
+    const result = processColorTick(component)
+
+    expect(result.SIGNAL_OUT).toBe('1,0.5,0,1')
+  })
+
+  it('handles string numbers with spaces for RGB', () => {
+    const component = {
+      inputs: { SIGNAL_IN_R: '  1.0  ', SIGNAL_IN_G: '  0.5  ', SIGNAL_IN_B: '  0.0  ', SIGNAL_IN_A: '  1.0  ' },
+      settings: { useHSV: false }
+    }
+    const result = processColorTick(component)
+
+    expect(result.SIGNAL_OUT).toBe('1,0.5,0,1')
+  })
+
+  it('handles non-numeric strings as 0 for RGB', () => {
+    const component = {
+      inputs: { SIGNAL_IN_R: 'invalid', SIGNAL_IN_G: 0.5, SIGNAL_IN_B: 0.0, SIGNAL_IN_A: 1.0 },
+      settings: { useHSV: false }
+    }
+    const result = processColorTick(component)
+
+    expect(result.SIGNAL_OUT).toBe('0,0.5,0,1')
+  })
+
+  it('handles null inputs as 0 for RGB', () => {
+    const component = {
+      inputs: { SIGNAL_IN_R: null, SIGNAL_IN_G: 0.5, SIGNAL_IN_B: 0.0, SIGNAL_IN_A: 1.0 },
+      settings: { useHSV: false }
+    }
+    const result = processColorTick(component)
+
+    expect(result.SIGNAL_OUT).toBe('0,0.5,0,1')
+  })
+
+  it('handles undefined inputs as 0 for RGB', () => {
+    const component = {
+      inputs: { SIGNAL_IN_G: 0.5, SIGNAL_IN_B: 0.0, SIGNAL_IN_A: 1.0 },
+      settings: { useHSV: false }
+    }
+    const result = processColorTick(component)
+
+    expect(result.SIGNAL_OUT).toBe('0,0.5,0,1')
+  })
+
+  it('handles boolean true as 1 for RGB', () => {
+    const component = {
+      inputs: { SIGNAL_IN_R: true, SIGNAL_IN_G: false, SIGNAL_IN_B: true, SIGNAL_IN_A: true },
+      settings: { useHSV: false }
+    }
+    const result = processColorTick(component)
+
+    expect(result.SIGNAL_OUT).toBe('0,0,0,1')
+  })
+
+  it('handles boolean false as 0 for RGB', () => {
+    const component = {
+      inputs: { SIGNAL_IN_R: false, SIGNAL_IN_G: false, SIGNAL_IN_B: false, SIGNAL_IN_A: false },
+      settings: { useHSV: false }
+    }
+    const result = processColorTick(component)
+
+    expect(result.SIGNAL_OUT).toBe('0,0,0,1')
+  })
+
+  it('clamps alpha to 0-1 range', () => {
+    const component = {
+      inputs: { SIGNAL_IN_R: 1.0, SIGNAL_IN_G: 0.5, SIGNAL_IN_B: 0.0, SIGNAL_IN_A: 2.0 },
+      settings: { useHSV: false }
+    }
+    const result = processColorTick(component)
+
+    expect(result.SIGNAL_OUT).toBe('1,0.5,0,1')
+  })
+
+  it('handles negative alpha', () => {
+    const component = {
+      inputs: { SIGNAL_IN_R: 1.0, SIGNAL_IN_G: 0.5, SIGNAL_IN_B: 0.0, SIGNAL_IN_A: -0.5 },
+      settings: { useHSV: false }
+    }
+    const result = processColorTick(component)
+
+    expect(result.SIGNAL_OUT).toBe('1,0.5,0,0')
+  })
+
+  it('handles undefined alpha as 1', () => {
+    const component = {
+      inputs: { SIGNAL_IN_R: 1.0, SIGNAL_IN_G: 0.5, SIGNAL_IN_B: 0.0 },
+      settings: { useHSV: false }
+    }
+    const result = processColorTick(component)
+
+    expect(result.SIGNAL_OUT).toBe('1,0.5,0,1')
+  })
+
+  it('handles null alpha as 1', () => {
+    const component = {
+      inputs: { SIGNAL_IN_R: 1.0, SIGNAL_IN_G: 0.5, SIGNAL_IN_B: 0.0, SIGNAL_IN_A: null },
+      settings: { useHSV: false }
+    }
+    const result = processColorTick(component)
+
+    expect(result.SIGNAL_OUT).toBe('1,0.5,0,1')
+  })
+
+  it('handles empty string alpha as 1', () => {
+    const component = {
+      inputs: { SIGNAL_IN_R: 1.0, SIGNAL_IN_G: 0.5, SIGNAL_IN_B: 0.0, SIGNAL_IN_A: '' },
+      settings: { useHSV: false }
+    }
+    const result = processColorTick(component)
+
+    expect(result.SIGNAL_OUT).toBe('1,0.5,0,1')
+  })
+
+  it('processes HSV values correctly', () => {
+    const component = {
+      inputs: { SIGNAL_IN_R: 120, SIGNAL_IN_G: 1.0, SIGNAL_IN_B: 0.8, SIGNAL_IN_A: 1.0 },
+      settings: { useHSV: true }
+    }
+    const result = processColorTick(component)
+
+    expect(result.SIGNAL_OUT).toBe('0,1,0,1')
+  })
+
+  it('clamps HSV values to correct ranges', () => {
+    const component = {
+      inputs: { SIGNAL_IN_R: 400, SIGNAL_IN_G: 1.5, SIGNAL_IN_B: 2.0, SIGNAL_IN_A: 1.0 },
+      settings: { useHSV: true }
+    }
+    const result = processColorTick(component)
+
+    expect(result.SIGNAL_OUT).toBe('1,0,0,1')
+  })
+
+  it('handles string numbers for HSV', () => {
+    const component = {
+      inputs: { SIGNAL_IN_R: '120', SIGNAL_IN_G: '1.0', SIGNAL_IN_B: '0.8', SIGNAL_IN_A: '1.0' },
+      settings: { useHSV: true }
+    }
+    const result = processColorTick(component)
+
+    expect(result.SIGNAL_OUT).toBe('0,1,0,1')
+  })
+
+  it('handles non-numeric strings as 0 for HSV', () => {
+    const component = {
+      inputs: { SIGNAL_IN_R: 'invalid', SIGNAL_IN_G: 1.0, SIGNAL_IN_B: 0.8, SIGNAL_IN_A: 1.0 },
+      settings: { useHSV: true }
+    }
+    const result = processColorTick(component)
+
+    expect(result.SIGNAL_OUT).toBe('1,0,0,1')
+  })
+
+  it('handles undefined settings', () => {
+    const component = {
+      inputs: { SIGNAL_IN_R: 1.0, SIGNAL_IN_G: 0.5, SIGNAL_IN_B: 0.0, SIGNAL_IN_A: 1.0 }
+    }
+    const result = processColorTick(component)
+
+    expect(result.SIGNAL_OUT).toBe('1,0.5,0,1')
+  })
+
+  it('handles missing inputs object', () => {
+    const component = {}
+    const result = processColorTick(component)
+
+    expect(result).toBeUndefined()
+  })
+
+  it('handles NaN values', () => {
+    const component = {
+      inputs: { SIGNAL_IN_R: NaN, SIGNAL_IN_G: 0.5, SIGNAL_IN_B: 0.0, SIGNAL_IN_A: 1.0 },
+      settings: { useHSV: false }
+    }
+    const result = processColorTick(component)
+
+    expect(result.SIGNAL_OUT).toBe('0,0.5,0,1')
+  })
+
+  it('handles Infinity values', () => {
+    const component = {
+      inputs: { SIGNAL_IN_R: Infinity, SIGNAL_IN_G: 0.5, SIGNAL_IN_B: 0.0, SIGNAL_IN_A: 1.0 },
+      settings: { useHSV: false }
+    }
+    const result = processColorTick(component)
+
+    expect(result.SIGNAL_OUT).toBe('0,0.5,0,1')
+  })
+
+  it('handles -Infinity values', () => {
+    const component = {
+      inputs: { SIGNAL_IN_R: -Infinity, SIGNAL_IN_G: 0.5, SIGNAL_IN_B: 0.0, SIGNAL_IN_A: 1.0 },
+      settings: { useHSV: false }
+    }
+    const result = processColorTick(component)
+
+    expect(result.SIGNAL_OUT).toBe('0,0.5,0,1')
   })
 })

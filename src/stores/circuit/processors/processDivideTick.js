@@ -1,67 +1,110 @@
 /**
  * Processes a single tick for a Divide component in the circuit simulation
  *
- * Calculates the quotient of two input signals when both inputs are available
- * and their timestamps are within the configured timeframe. The function handles
- * division by zero protection and optional value clamping.
+ * Calculates the quotient of two input signals.
+ * Handles division by zero and invalid inputs gracefully.
+ * Non-numeric inputs are handled by converting to numbers.
  *
  * @param {Object} component - The Divide component to process
  * @param {Object} component.inputs - The input signal values
- * @param {number} [component.inputs.SIGNAL_IN_1] - First input signal value
- * @param {number} [component.inputs.SIGNAL_IN_2] - Second input signal value (divisor)
- * @param {Object} component.lastSignalTimestamps - Timestamps of when each input was last received
- * @param {number} [component.lastSignalTimestamps.SIGNAL_IN_1] - Timestamp of first input signal
- * @param {number} [component.lastSignalTimestamps.SIGNAL_IN_2] - Timestamp of second input signal
+ * @param {number|string} component.inputs.SIGNAL_IN_1 - First input signal value (dividend)
+ * @param {number|string} component.inputs.SIGNAL_IN_2 - Second input signal value (divisor)
  * @param {Object} component.settings - Component configuration settings
- * @param {number} [component.settings.timeframe] - Maximum time difference allowed between inputs
  * @param {number} [component.settings.clampMax] - Maximum value to clamp the result to
  * @param {number} [component.settings.clampMin] - Minimum value to clamp the result to
- * @returns {string|undefined} The calculated quotient as a string, or undefined if conditions aren't met
- *
- * @description
- * This function performs the following operations:
- * - Validates that both input signals are present and have valid timestamps
- * - Checks if the time difference between inputs is within the configured timeframe
- * - Converts input values to numbers and calculates the quotient (SIGNAL_IN_1 / SIGNAL_IN_2)
- * - Protects against division by zero by returning 0 when the divisor is zero
- * - Applies optional clamping to keep the result within min/max bounds
- * - Returns the calculated quotient as a string or undefined if processing conditions aren't met
- *
- * The function only processes the division when both inputs are available and
- * their timestamps are within the specified timeframe. If timeframe is set to 0.0,
- * the time constraint is ignored and processing occurs whenever both inputs are present.
- * Division by zero is handled gracefully by returning 0 instead of throwing an error.
+ * @returns {Object|undefined} Object with SIGNAL_OUT, or undefined if no valid inputs
  *
  * @example
- * // Process a Divide component with inputs 10 and 2
+ * // Basic division
  * const component = {
  *   inputs: { SIGNAL_IN_1: 10, SIGNAL_IN_2: 2 },
- *   lastSignalTimestamps: { SIGNAL_IN_1: 1640995200000, SIGNAL_IN_2: 1640995200001 },
- *   settings: { timeframe: 100, clampMax: 10, clampMin: -5 }
+ *   settings: { clampMax: 10, clampMin: -5 }
  * }
- * const result = circuitStore._processDivideTick(component)
- * console.log(result) // "5"
+ * const result = processDivideTick(component)
+ * console.log(result.SIGNAL_OUT) // 5
+ *
+ * @example
+ * // Division by zero
+ * const component = {
+ *   inputs: { SIGNAL_IN_1: 10, SIGNAL_IN_2: 0 },
+ *   settings: {}
+ * }
+ * const result = processDivideTick(component)
+ * console.log(result.SIGNAL_OUT) // 0 (error handling)
  */
 export default function processDivideTick (component) {
-  const { lastSignalTimestamps, settings, inputs } = component
+  const { settings, inputs } = component
   const in1 = inputs?.SIGNAL_IN_1
   const in2 = inputs?.SIGNAL_IN_2
-  const in1Timestamp = lastSignalTimestamps?.SIGNAL_IN_1
-  const in2Timestamp = lastSignalTimestamps?.SIGNAL_IN_2
 
-  if (in1 !== undefined && in2 !== undefined && in1Timestamp && in2Timestamp) {
-    const timeDiff = Math.abs(in1Timestamp - in2Timestamp)
+  // Handle null/undefined/empty inputs as 0
+  const input1 = (in1 === null || in1 === undefined || in1 === '') ? 0 : in1
+  const input2 = (in2 === null || in2 === undefined || in2 === '') ? 0 : in2
 
-    if (settings.timeframe === 0.0 || timeDiff <= settings.timeframe) {
-      const num1 = parseFloat(in1) || 0
-      const num2 = parseFloat(in2) || 0
-      let quotient = num2 !== 0 ? num1 / num2 : 0 // Avoid division by zero
+  try {
+    // Convert to numbers
+    const num1 = Number(input1)
+    const num2 = Number(input2)
 
-      if (settings.clampMax !== undefined) quotient = Math.min(quotient, settings.clampMax)
-
-      if (settings.clampMin !== undefined) quotient = Math.max(quotient, settings.clampMin)
-
-      return { SIGNAL_OUT: quotient.toString() }
+    if (isNaN(num1) || isNaN(num2)) {
+      // If either input cannot be converted to number, return first input as-is
+      return { SIGNAL_OUT: input1 }
     }
+
+    // Handle division by zero
+    if (num2 === 0) {
+      return { SIGNAL_OUT: 0 } // Return 0 for division by zero
+    }
+
+    // Calculate quotient
+    let quotient = num1 / num2
+
+    // Apply clamping if configured
+    if (settings?.clampMax !== undefined) {
+      quotient = Math.min(quotient, settings.clampMax)
+    }
+
+    if (settings?.clampMin !== undefined) {
+      quotient = Math.max(quotient, settings.clampMin)
+    }
+
+    // --- Timeframe logic start ---
+    if (settings?.timeFrame > 0) {
+      if (!component.signalHistory) {
+        component.signalHistory = []
+      }
+
+      const currentTime = Date.now()
+
+      // Add current result to history
+      component.signalHistory.push({
+        value: quotient,
+        timestamp: currentTime
+      })
+      // Remove old entries outside time frame
+      const cutoffTime = currentTime - (settings.timeFrame * 1000)
+
+      component.signalHistory = component.signalHistory.filter(entry => entry.timestamp >= cutoffTime)
+      // Calculate average over time frame
+      if (component.signalHistory.length > 0) {
+        const total = component.signalHistory.reduce((acc, entry) => acc + entry.value, 0)
+
+        quotient = total / component.signalHistory.length
+        // Re-apply clamping after averaging
+        if (settings?.clampMax !== undefined) {
+          quotient = Math.min(quotient, settings.clampMax)
+        }
+
+        if (settings?.clampMin !== undefined) {
+          quotient = Math.max(quotient, settings.clampMin)
+        }
+      }
+    }
+    // --- Timeframe logic end ---
+
+    return { SIGNAL_OUT: quotient }
+  } catch (error) {
+    // If calculation fails, return first input as-is
+    return { SIGNAL_OUT: input1 }
   }
 }

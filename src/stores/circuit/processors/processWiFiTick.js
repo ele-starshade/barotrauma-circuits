@@ -11,12 +11,30 @@
 export default function processWiFiTick (component, wifiChannels) {
   const { settings, inputs } = component
   const channelOverride = inputs?.SET_CHANNEL
-  const channel = channelOverride !== undefined ? Number(channelOverride) : settings.channel
+
+  // Determine channel to use (override takes precedence)
+  let channel = settings.channel
+
+  if (channelOverride !== undefined) {
+    const overrideChannel = Number(channelOverride)
+
+    if (!isNaN(overrideChannel)) {
+      // Clamp channel to valid range (1-100)
+      channel = Math.max(1, Math.min(100, Math.floor(overrideChannel)))
+    }
+  }
 
   // Read from the channels of the PREVIOUS tick
   const signalOut = wifiChannels[channel]
 
-  if (signalOut !== undefined) {
+  if (signalOut !== undefined && signalOut !== null) {
+    component.value = signalOut
+
     return { SIGNAL_OUT: signalOut }
+  } else {
+    // No signal on this channel
+    component.value = 0
+
+    return { SIGNAL_OUT: 0 }
   }
 }
