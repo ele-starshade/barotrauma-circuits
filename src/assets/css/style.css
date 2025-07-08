@@ -374,3 +374,8 @@ body {
   right: 0.5rem;
   z-index: 1;
 }
+
+.selected-for-placement {
+  border: 2px solid var(--highlight-blue) !important;
+  border-radius: 8px;
+}

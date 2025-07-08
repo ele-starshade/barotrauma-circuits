@@ -5,12 +5,14 @@ export default defineConfig({
   e2e: {
     baseUrl: 'http://localhost:5173',
     video: true,
+    chromeWebSecurity: false,
+    viewportWidth: 1920,
+    viewportHeight: 1080,
+    experimentalStudio: true,
     setupNodeEvents (on, config) {
       codeCoverageTask(on, config)
-      // include any other plugin code...
 
-      // It's IMPORTANT to return the config object
-      // with any changed environment variables
+      // include any other plugin code...
       return config
     }
   }

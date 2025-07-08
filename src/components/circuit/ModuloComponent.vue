@@ -16,18 +16,18 @@
     <div class="component-header">Modulo</div>
     <div class="component-body">
       <div class="component-pin in" data-pin-name="SIGNAL_IN">
-        <div class="new-wire-zone" @mousedown.stop="handleStartWiring('SIGNAL_IN')"></div>
+        <div class="new-wire-zone" @mousedown.stop @click.stop="handleWirePinClick('SIGNAL_IN')"></div>
         <div class="pin-circle"></div>
         <span>SIGNAL_IN</span>
       </div>
       <div class="component-pin in" data-pin-name="SET_MODULUS">
-        <div class="new-wire-zone" @mousedown.stop="handleStartWiring('SET_MODULUS')"></div>
+        <div class="new-wire-zone" @mousedown.stop @click.stop="handleWirePinClick('SET_MODULUS')"></div>
         <div class="pin-circle"></div>
         <span>SET_MODULUS</span>
       </div>
       <div class="component-pin out" data-pin-name="SIGNAL_OUT">
         <span>SIGNAL_OUT</span>
-        <div class="new-wire-zone" @mousedown.stop="handleStartWiring('SIGNAL_OUT')"></div>
+        <div class="new-wire-zone" @mousedown.stop @click.stop="handleWirePinClick('SIGNAL_OUT')"></div>
         <div class="pin-circle"></div>
       </div>
     </div>
@@ -47,6 +47,7 @@
 import { useCircuitStore } from '../../stores/circuit'
 import ComponentPins from '../ComponentPins.vue'
 import ConfigPanel from '../ConfigPanel.vue'
+import { handleWirePinClick } from '../../utils/wiringHandlers'
 import { reactive, watch, computed } from 'vue'
 
 const props = defineProps({
@@ -75,11 +76,5 @@ watch(() => props.settings, (newSettings) => {
 
 function updateSettings () {
   circuit.updateComponentSettings(props.id, { ...localSettings })
-}
-
-function handleStartWiring (pinName) {
-  if (props.mode === 'board') {
-    circuit.startWiring(props.id, pinName)
-  }
 }
 </script>

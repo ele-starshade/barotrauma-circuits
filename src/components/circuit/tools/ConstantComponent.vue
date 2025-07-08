@@ -21,7 +21,7 @@
     <div class="component-body">
       <div class="component-pin out" data-pin-name="VALUE_OUT">
         <span>VALUE_OUT</span>
-        <div class="new-wire-zone" @mousedown.stop="handleStartWiring('VALUE_OUT')"></div>
+        <div class="new-wire-zone" @mousedown.stop @click.stop="handleWirePinClick('VALUE_OUT', $event)"></div>
         <div class="pin-circle"></div>
       </div>
     </div>
@@ -67,9 +67,21 @@ const props = defineProps({
 
 const circuit = useCircuitStore()
 
-function handleStartWiring (pinName) {
-  // We only allow wiring on the board, not in the tray.
-  if (props.mode === 'board') {
+function handleWirePinClick (pinName, event) {
+  if (props.mode !== 'board') return
+
+  if (circuit.justEndedWiring) {
+    circuit.justEndedWiring = false
+
+    return
+  }
+
+  if (circuit.wiringInfo) {
+    // End wiring, pass the .pin-circle element of this pin
+    const pinCircle = event.currentTarget.parentElement.querySelector('.pin-circle')
+
+    circuit.endWiring(pinCircle)
+  } else {
     circuit.startWiring(props.id, pinName)
   }
 }

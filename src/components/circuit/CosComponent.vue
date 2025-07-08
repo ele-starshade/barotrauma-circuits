@@ -16,13 +16,13 @@
     <div class="component-header">Cos</div>
     <div class="component-body">
       <div class="component-pin in" data-pin-name="SIGNAL_IN">
-        <div class="new-wire-zone" @mousedown.stop="handleStartWiring('SIGNAL_IN')"></div>
+        <div class="new-wire-zone" @mousedown.stop @click.stop="handleWirePinClick('SIGNAL_IN')"></div>
         <div class="pin-circle"></div>
         <span>SIGNAL_IN</span>
       </div>
       <div class="component-pin out" data-pin-name="SIGNAL_OUT">
         <span>SIGNAL_OUT</span>
-        <div class="new-wire-zone" @mousedown.stop="handleStartWiring('SIGNAL_OUT')"></div>
+        <div class="new-wire-zone" @mousedown.stop @click.stop="handleWirePinClick('SIGNAL_OUT')"></div>
         <div class="pin-circle"></div>
       </div>
     </div>
@@ -45,6 +45,7 @@ import { useCircuitStore } from '../../stores/circuit'
 import ComponentPins from '../ComponentPins.vue'
 import ConfigPanel from '../ConfigPanel.vue'
 import { reactive, watch, computed } from 'vue'
+import { handleWirePinClick } from '../../utils/wiringHandlers'
 
 const props = defineProps({
   id: String,
@@ -72,12 +73,5 @@ watch(() => props.settings, (newSettings) => {
 
 function updateSettings () {
   circuit.updateComponentSettings(props.id, { ...localSettings })
-}
-
-function handleStartWiring (pinName) {
-  // We only allow wiring on the board, not in the tray.
-  if (props.mode === 'board') {
-    circuit.startWiring(props.id, pinName)
-  }
 }
 </script>

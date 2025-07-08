@@ -21,17 +21,17 @@
     <div class="component-body">
       <div class="light-indicator" :style="{ backgroundColor: finalColor, boxShadow: lightGlow }"></div>
       <div class="component-pin in" data-pin-name="TOGGLE_STATE">
-        <div class="new-wire-zone" @mousedown.stop="handleStartWiring('TOGGLE_STATE')"></div>
+        <div class="new-wire-zone" @mousedown.stop @click.stop="handleWirePinClick(circuit, props.id, 'TOGGLE_STATE', $event)"></div>
         <div class="pin-circle"></div>
         <span>TOGGLE_STATE</span>
       </div>
       <div class="component-pin in" data-pin-name="SET_STATE">
-        <div class="new-wire-zone" @mousedown.stop="handleStartWiring('SET_STATE')"></div>
+        <div class="new-wire-zone" @mousedown.stop @click.stop="handleWirePinClick(circuit, props.id, 'SET_STATE', $event)"></div>
         <div class="pin-circle"></div>
         <span>SET_STATE</span>
       </div>
       <div class="component-pin in" data-pin-name="SET_COLOR">
-        <div class="new-wire-zone" @mousedown.stop="handleStartWiring('SET_COLOR')"></div>
+        <div class="new-wire-zone" @mousedown.stop @click.stop="handleWirePinClick(circuit, props.id, 'SET_COLOR', $event)"></div>
         <div class="pin-circle"></div>
         <span>SET_COLOR</span>
       </div>
@@ -69,6 +69,7 @@ import { useCircuitStore } from '../../../stores/circuit'
 import ComponentPins from '../../ComponentPins.vue'
 import ConfigPanel from '../../ConfigPanel.vue'
 import { reactive, watch, computed } from 'vue'
+import { handleWirePinClick } from '../../../utils/wiringHandlers'
 
 const props = defineProps({
   id: String,
@@ -99,7 +100,7 @@ const finalColor = computed(() => {
     return componentData.value.color || localSettings.color
   }
 
-  return '#333333' // Off color
+  return '#000000' // Off color
 })
 
 const lightGlow = computed(() => {
@@ -120,12 +121,6 @@ watch(() => props.settings, (newSettings) => {
 
 function updateSettings () {
   circuit.updateComponentSettings(props.id, { ...localSettings })
-}
-
-function handleStartWiring (pinName) {
-  if (props.mode === 'board') {
-    circuit.startWiring(props.id, pinName)
-  }
 }
 
 const isColorOverridden = computed(() => {

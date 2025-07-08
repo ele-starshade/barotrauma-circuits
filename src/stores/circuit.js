@@ -83,6 +83,7 @@ import processTanTick from './circuit/processors/processTanTick.js'
 import processWiFiTick from './circuit/processors/processWiFiTick.js'
 import processXorTick from './circuit/processors/processXorTick.js'
 import processDisplayTick from './circuit/processors/processDisplayTick.js'
+import processLightTick from './circuit/processors/processLightTick.js'
 
 const componentMap = {
   Adder: AdderComponent,
@@ -135,9 +136,9 @@ export const useCircuitStore = defineStore('circuit', {
 
     // Interaction states
     wiringInfo: null, // e.g. { startComponentId: '..', startPinName: '..' }
+    justEndedWiring: false,
     movingComponentInfo: null, // e.g., { id: 'component-0', offsetX: 20, offsetY: 30 }
     movingWaypointInfo: null, // e.g., { wireId: '..', waypointId: '..', offsetX: .., offsetY: ..}
-    ghostComponent: null, // e.g. { is: ..., name: ..., x: ..., y: ..., width: ..., height: ... }
     selectedComponentId: null,
     selectedWireId: null,
 
@@ -153,7 +154,10 @@ export const useCircuitStore = defineStore('circuit', {
     wireIdCounter: 0,
     waypointIdCounter: 0,
     componentOutputs: {},
-    wifiChannels: {}
+    wifiChannels: {},
+
+    // Click-to-place state
+    pendingPlacementComponent: null
   }),
 
   getters: {
@@ -225,148 +229,49 @@ export const useCircuitStore = defineStore('circuit', {
 
     // --- Component Actions ---
     /**
-     * Initiates the dragging process for a component from the component tray
+     * Adds a new component to the circuit board at the specified coordinates (click-to-place only).
      *
-     * Creates a ghost component that follows the mouse cursor during drag operations.
-     * The ghost component maintains the original component's properties including
-     * dimensions, settings, values, and tool status. The component is initially
-     * positioned off-screen until the drag operation begins.
-     *
-     * @param {Object} component - The component object to be dragged
-     * @param {string} component.is - The component's identifier
-     * @param {string} component.name - The component's display name
-     * @param {number} component.value - The component's current value (optional)
-     * @param {Object} component.settings - The component's configuration settings (optional)
-     * @param {boolean} component.isTool - Whether the component is a tool component (optional)
-     * @param {Event} event - The mouse event that triggered the drag operation
-     * @returns {void}
-     */
-    startDraggingComponent (component, event) {
-      const rect = event.currentTarget.getBoundingClientRect()
-      const { is, name, value, settings, isTool } = component
-
-      this.ghostComponent = {
-        is,
-        name,
-        width: rect.width,
-        height: rect.height,
-        offsetX: event.clientX - rect.left,
-        offsetY: event.clientY - rect.top,
-        x: -9999, // Initially position off-screen
-        y: -9999
-      }
-
-      if (value !== undefined) {
-        this.ghostComponent.value = value
-      }
-
-      if (settings) {
-        this.ghostComponent.settings = { ...settings }
-      }
-
-      if (isTool) {
-        this.ghostComponent.isTool = isTool
-      }
-    },
-
-    /**
-     * Updates the position of the ghost component during drag operations
-     *
-     * Calculates the new position of the ghost component based on the current mouse
-     * position, taking into account the circuit board's position and borders.
-     * The component is snapped to a grid system for precise positioning.
-     *
-     * @param {Event} event - The mouse event containing the current cursor position
+     * @param {Object} component - The component object to add
+     * @param {number} x - X coordinate on the board
+     * @param {number} y - Y coordinate on the board
      * @returns {void}
      *
      * @description
-     * This function performs the following operations:
-     * - Retrieves the circuit board element and its bounding rectangle
-     * - Calculates the board's border offsets for accurate positioning
-     * - Determines the mouse position relative to the board
-     * - Snaps the ghost component to a 20px grid for alignment
-     * - Updates the ghost component's x and y coordinates
+     * This function creates a new component instance from the provided data and adds it to the board.
+     * It handles various component-specific initializations such as:
+     * - Setting up Random component execution tracking
+     * - Configuring Light component state and color
+     * - Initializing signal timestamp tracking for mathematical/logical components
      *
-     * The function only operates when a ghost component exists and is being
-     * dragged. The grid snapping ensures components are placed in consistent
-     * positions for better visual organization.
+     * The function only supports click-to-place mode. Drag-and-drop from the tray is not supported.
+     *
+     * @example
+     * // Add a new Constant component at (x, y)
+     * circuitStore.addComponent(component, x, y)
      */
-    updateGhostComponentPosition (event) {
-      if (!this.ghostComponent) return
+    addComponent (component = null, x = null, y = null) {
+      let newComponentData
 
-      const boardEl = document.getElementById('circuit-board')
-      const boardRect = boardEl.getBoundingClientRect()
-      const style = window.getComputedStyle(boardEl)
-      const borderLeft = parseFloat(style.borderLeftWidth)
-      const borderTop = parseFloat(style.borderTopWidth)
-
-      const gridSize = 20
-      const x = event.clientX - boardRect.left - borderLeft
-      const y = event.clientY - boardRect.top - borderTop
-
-      this.ghostComponent.x = Math.round((x - this.ghostComponent.width / 2) / gridSize) * gridSize
-      this.ghostComponent.y = Math.round((y - this.ghostComponent.height / 2) / gridSize) * gridSize
-    },
-
-    /**
-     * Adds a new component to the circuit board from the ghost component
-     *
-     * Creates a new component instance based on the current ghost component
-     * and adds it to the board. Performs validation checks for component limits
-     * and initializes component-specific properties based on the component type.
-     *
-     * @returns {void}
-     *
-     * @description
-     * This function performs the following operations:
-     * - Validates that a ghost component exists
-     * - Checks component limits for non-tool components
-     * - Creates a new component object with basic properties (id, type, position, dimensions)
-     * - Copies optional properties like value, settings, and tool status
-     * - Initializes component-specific properties based on component type:
-     *   - Random: Sets lastExecution and currentOutput
-     *   - Light: Sets isOn, color, and lastToggleState
-     *   - Math/Logic components: Initializes lastSignalTimestamps
-     * - Adds the new component to the boardComponents array
-     * - Clears the ghost component after successful addition
-     *
-     * The function handles different component types with their specific
-     * initialization requirements and maintains the component limit system
-     * for non-tool components.
-     */
-    addComponent () {
-      if (!this.ghostComponent) return
-
-      const nonToolComponents = this.boardComponents.filter(c => !c.isTool).length
-
-      if (this.isComponentLimitEnabled && !this.ghostComponent.isTool && nonToolComponents >= this.componentLimit) {
-        toast.error('Component limit reached. Cannot add more components.')
-        this.ghostComponent = null
-
+      if (component && x !== null && y !== null) {
+        // Click-to-place mode
+        newComponentData = {
+          id: `component-${this.componentIdCounter++}`,
+          is: component.is,
+          name: component.name,
+          x,
+          y,
+          width: component.width,
+          height: component.height,
+          ...(component.value !== undefined ? { value: component.value } : {}),
+          ...(component.settings ? { settings: { ...component.settings } } : {}),
+          ...(component.isTool ? { isTool: component.isTool } : {})
+        }
+      } else {
         return
       }
 
-      const newComponent = {
-        id: `component-${this.componentIdCounter++}`,
-        is: this.ghostComponent.is,
-        name: this.ghostComponent.name,
-        x: this.ghostComponent.x,
-        y: this.ghostComponent.y,
-        width: this.ghostComponent.width,
-        height: this.ghostComponent.height
-      }
-
-      if (this.ghostComponent.value !== undefined) {
-        newComponent.value = this.ghostComponent.value
-      }
-
-      if (this.ghostComponent.settings) {
-        newComponent.settings = { ...this.ghostComponent.settings }
-      }
-
-      if (this.ghostComponent.isTool) {
-        newComponent.isTool = this.ghostComponent.isTool
-      }
+      // (existing per-component initialization logic goes here, using newComponentData)
+      const newComponent = { ...newComponentData }
 
       if (newComponent.name === 'Random') {
         newComponent.lastExecution = 0
@@ -499,7 +404,6 @@ export const useCircuitStore = defineStore('circuit', {
       }
 
       this.boardComponents.push(newComponent)
-      this.ghostComponent = null
       this.resetCircuitState()
     },
 
@@ -856,6 +760,8 @@ export const useCircuitStore = defineStore('circuit', {
      * circuitStore.startWiring('component-2', 'SIGNAL_IN')
      */
     startWiring (componentId, pinName) {
+      if (this.wiringInfo) return // Prevent starting a new wire if already wiring
+
       this.movingComponentInfo = null
       this.movingWaypointInfo = null
       this.wiringInfo = {
@@ -1011,6 +917,8 @@ export const useCircuitStore = defineStore('circuit', {
       }
 
       this.wiringInfo = null
+      this.justEndedWiring = true
+      setTimeout(() => { this.justEndedWiring = false }, 0)
     },
 
     /**
@@ -1450,6 +1358,7 @@ export const useCircuitStore = defineStore('circuit', {
             case 'Tan': newValues = processTanTick(component); break
             case 'WiFi': newValues = processWiFiTick(component, this.wifiChannels); break
             case 'Display': processDisplayTick(component); break
+            case 'Light': processLightTick(component); break
           }
 
           if (newValues) {
@@ -1730,6 +1639,27 @@ export const useCircuitStore = defineStore('circuit', {
         toast.error('Failed to import circuit state. The data may be corrupted or in an old format.')
         console.error('Import failed:', error)
       }
+    },
+
+    /**
+     * Starts placement mode for a component from the tray
+     * @param {Object} component - The component object to place
+     */
+    startPlacement (component) {
+      this.pendingPlacementComponent = component
+    },
+    /**
+     * Places the pending component at the given board coordinates
+     * @param {number} x - X coordinate on the board
+     * @param {number} y - Y coordinate on the board
+     */
+    placePendingComponent (x, y) {
+      if (!this.pendingPlacementComponent) return
+
+      const component = this.pendingPlacementComponent
+
+      this.pendingPlacementComponent = null
+      this.addComponent(component, x, y)
     }
   }
 })

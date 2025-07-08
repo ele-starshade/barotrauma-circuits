@@ -16,28 +16,28 @@
     <div class="component-header">Color</div>
     <div class="component-body">
       <div class="component-pin in" data-pin-name="SIGNAL_IN_R">
-        <div class="new-wire-zone" @mousedown.stop="handleStartWiring('SIGNAL_IN_R')"></div>
+        <div class="new-wire-zone" @mousedown.stop @click.stop="handleWirePinClick('SIGNAL_IN_R')"></div>
         <div class="pin-circle"></div>
         <span>SIGNAL_R</span>
       </div>
       <div class="component-pin in" data-pin-name="SIGNAL_IN_G">
-        <div class="new-wire-zone" @mousedown.stop="handleStartWiring('SIGNAL_IN_G')"></div>
+        <div class="new-wire-zone" @mousedown.stop @click.stop="handleWirePinClick('SIGNAL_IN_G')"></div>
         <div class="pin-circle"></div>
         <span>SIGNAL_G</span>
       </div>
       <div class="component-pin in" data-pin-name="SIGNAL_IN_B">
-        <div class="new-wire-zone" @mousedown.stop="handleStartWiring('SIGNAL_IN_B')"></div>
+        <div class="new-wire-zone" @mousedown.stop @click.stop="handleWirePinClick('SIGNAL_IN_B')"></div>
         <div class="pin-circle"></div>
         <span>SIGNAL_B</span>
       </div>
       <div class="component-pin in" data-pin-name="SIGNAL_IN_A">
-        <div class="new-wire-zone" @mousedown.stop="handleStartWiring('SIGNAL_IN_A')"></div>
+        <div class="new-wire-zone" @mousedown.stop @click.stop="handleWirePinClick('SIGNAL_IN_A')"></div>
         <div class="pin-circle"></div>
         <span>SIGNAL_A</span>
       </div>
       <div class="component-pin out" data-pin-name="SIGNAL_OUT">
         <span>SIGNAL_OUT</span>
-        <div class="new-wire-zone" @mousedown.stop="handleStartWiring('SIGNAL_OUT')"></div>
+        <div class="new-wire-zone" @mousedown.stop @click.stop="handleWirePinClick('SIGNAL_OUT')"></div>
         <div class="pin-circle"></div>
       </div>
     </div>
@@ -60,6 +60,7 @@ import { useCircuitStore } from '../../stores/circuit'
 import ComponentPins from '../ComponentPins.vue'
 import ConfigPanel from '../ConfigPanel.vue'
 import { reactive, watch, computed } from 'vue'
+import { handleWirePinClick } from '../../utils/wiringHandlers'
 
 const props = defineProps({
   id: String,
@@ -87,12 +88,5 @@ watch(() => props.settings, (newSettings) => {
 
 function updateSettings () {
   circuit.updateComponentSettings(props.id, { ...localSettings })
-}
-
-function handleStartWiring (pinName) {
-  // We only allow wiring on the board, not in the tray.
-  if (props.mode === 'board') {
-    circuit.startWiring(props.id, pinName)
-  }
 }
 </script>

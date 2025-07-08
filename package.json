@@ -9,7 +9,7 @@
     "preview": "dotenvx run -- vite preview",
     "test": "dotenvx run -f .env.test -- vitest run --coverage",
     "test:unit": "dotenvx run -f .env.test -- vitest",
-    "test:e2e": "dotenvx run -f .env.test -- cypress run",
+    "test:e2e": "dotenvx run -f .env.test -- cypress run --browser chrome",
     "e2e": "cypress open",
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --ignore-path .gitignore",
     "cov:combine": "nyc merge --dir coverage --include coverage/** combined-coverage/coverage.json && npm run cov:report",

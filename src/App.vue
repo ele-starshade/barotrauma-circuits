@@ -8,24 +8,9 @@
   >
     <main
       id="circuit-board"
-      @drop="onDrop"
-      @dragover.prevent="onDragOver"
-      @dragend="onDragEnd"
       @mousedown.self="circuit.clearSelection()"
+      @click="onBoardClick"
     >
-      <!-- Ghost component for drag-and-drop -->
-      <component
-        v-if="circuit.ghostComponent"
-        :is="circuit.ghostComponent.is"
-        :style="{
-          position: 'absolute',
-          left: `${circuit.ghostComponent.x}px`,
-          top: `${circuit.ghostComponent.y}px`,
-          opacity: 0.7,
-          pointerEvents: 'none',
-        }"
-        mode="board"
-      />
       <!-- Components on the board -->
       <component
         v-for="component in circuit.boardComponents"
@@ -209,102 +194,6 @@ function endPan () {
   document.body.style.cursor = 'default'
   window.removeEventListener('mousemove', pan)
   window.removeEventListener('mouseup', endPan)
-}
-
-/**
- * Handles the dragover event to update the ghost component position
- *
- * @param {DragEvent} event - The dragover event object containing mouse coordinates
- * @returns {void}
- *
- * @description
- * This function is called when a component is being dragged over the circuit board.
- * It updates the position of the ghost component (visual preview) to follow the
- * mouse cursor, providing real-time feedback to the user about where the component
- * will be placed when dropped.
- *
- * The function delegates the actual position update logic to the circuit store's
- * updateGhostComponentPosition method, which handles the coordinate calculations
- * and ghost component state management.
- *
- * This function is typically bound to the dragover event on the circuit board
- * element and works in conjunction with the drag-and-drop system to provide
- * visual feedback during component placement.
- *
- * @example
- * // This function is typically called by the dragover event listener
- * // when dragging a component over the circuit board
- * <div @dragover="onDragOver">
- *
- * // The ghost component will update its position to follow the mouse cursor
- * // providing visual feedback for component placement
- */
-function onDragOver (event) {
-  circuit.updateGhostComponentPosition(event)
-}
-
-/**
- * Handles the dragend event to clean up the ghost component
- *
- * @param {DragEvent} event - The dragend event object
- * @returns {void}
- *
- * @description
- * This function is called when a component drag operation ends, either by dropping
- * the component or canceling the drag. It cleans up the ghost component state by
- * setting it to null, which removes the visual preview component from the circuit board.
- *
- * The ghost component is a temporary visual element that shows where a component
- * will be placed during drag operations. Once the drag ends, this preview is no
- * longer needed and should be removed to prevent it from remaining visible on the board.
- *
- * This function is typically bound to the dragend event on the circuit board element
- * and works in conjunction with the drag-and-drop system to ensure proper cleanup
- * after component placement operations.
- *
- * @example
- * // This function is typically called by the dragend event listener
- * // when a component drag operation ends
- * <div @dragend="onDragEnd">
- *
- * // After calling this function, the ghost component will be removed
- * // and the circuit board will return to its normal state
- */
-function onDragEnd () {
-  circuit.ghostComponent = null
-}
-
-/**
- * Handles the drop event to add a new component to the circuit board
- *
- * @param {DragEvent} event - The drop event object
- * @returns {void}
- *
- * @description
- * This function is called when a component is dropped onto the circuit board
- * during a drag-and-drop operation. It prevents the default browser drop behavior
- * and triggers the addition of a new component to the circuit board at the drop location.
- *
- * The function works in conjunction with the drag-and-drop system to handle
- * component placement. When a user drags a component from the component palette
- * and drops it onto the circuit board, this function ensures the component is
- * properly added to the board at the correct position.
- *
- * This function is typically bound to the drop event on the circuit board element
- * and coordinates with the ghost component system to provide visual feedback
- * during the drag operation.
- *
- * @example
- * // This function is typically called by the drop event listener
- * // when a component is dropped onto the circuit board
- * <div @drop="onDrop">
- *
- * // After calling this function, a new component will be added
- * // to the circuit board at the drop location
- */
-function onDrop (event) {
-  event.preventDefault()
-  circuit.addComponent()
 }
 
 /**
@@ -507,8 +396,6 @@ function onWaypointMouseDown (wireId, waypointId, event) {
 function onMouseMove (event) {
   if (isPanning.value) return
 
-  if (circuit.ghostComponent) return
-
   if (circuit.movingWaypointInfo) {
     circuit.updateMoveWaypoint(event)
   } else if (circuit.movingComponentInfo) {
@@ -614,6 +501,29 @@ function handleKeyDown (event) {
 
   if (event.key === 'Delete' || event.key === 'Backspace') {
     circuit.deleteSelection()
+  }
+}
+
+function onBoardClick (event) {
+  if (circuit.pendingPlacementComponent) {
+    // Get click coordinates relative to the board, accounting for border
+    const boardEl = event.currentTarget
+    const boardRect = boardEl.getBoundingClientRect()
+    const style = window.getComputedStyle(boardEl)
+    const borderLeft = parseFloat(style.borderLeftWidth)
+    const borderTop = parseFloat(style.borderTopWidth)
+    let x = event.clientX - boardRect.left - borderLeft
+    let y = event.clientY - boardRect.top - borderTop
+
+    // Center the component at the click location
+    const comp = circuit.pendingPlacementComponent
+    const width = comp.width || 120
+    const height = comp.height || 90
+
+    x = x - width / 2
+    y = y - height / 2
+
+    circuit.placePendingComponent(x, y)
   }
 }
 

@@ -21,7 +21,7 @@
     <div class="component-body">
       <div class="component-pin out" data-pin-name="VALUE_OUT">
         <span>VALUE_OUT</span>
-        <div class="new-wire-zone" @mousedown.stop="handleStartWiring('VALUE_OUT')"></div>
+        <div class="new-wire-zone" @mousedown.stop @click.stop="handleWirePinClick(circuit, props.id, 'VALUE_OUT', $event)"></div>
         <div class="pin-circle"></div>
       </div>
     </div>
@@ -50,6 +50,7 @@ import { useCircuitStore } from '../../../stores/circuit'
 import ComponentPins from '../../ComponentPins.vue'
 import ConfigPanel from '../../ConfigPanel.vue'
 import { reactive, watch, computed } from 'vue'
+import { handleWirePinClick } from '../../../utils/wiringHandlers'
 
 const props = defineProps({
   id: String,
@@ -83,12 +84,5 @@ function updateSettings () {
     max: Number(localSettings.max),
     period: Number(localSettings.period)
   })
-}
-
-function handleStartWiring (pinName) {
-  // We only allow wiring on the board, not in the tray.
-  if (props.mode === 'board') {
-    circuit.startWiring(props.id, pinName)
-  }
 }
 </script>

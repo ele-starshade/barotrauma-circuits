@@ -17,17 +17,17 @@
     <div class="component-body">
       <div class="pins-container-in">
         <div class="component-pin in" data-pin-name="SIGNAL_IN">
-          <div class="new-wire-zone" @mousedown.stop="handleStartWiring('SIGNAL_IN')"></div>
+          <div class="new-wire-zone" @mousedown.stop @click.stop="handleWirePinClick('SIGNAL_IN')"></div>
           <div class="pin-circle"></div>
           <span>SIGNAL_IN</span>
         </div>
         <div class="component-pin in" data-pin-name="SET_OUTPUT">
-          <div class="new-wire-zone" @mousedown.stop="handleStartWiring('SET_OUTPUT')"></div>
+          <div class="new-wire-zone" @mousedown.stop @click.stop="handleWirePinClick('SET_OUTPUT')"></div>
           <div class="pin-circle"></div>
           <span>SET_OUTPUT</span>
         </div>
         <div class="component-pin in" data-pin-name="MOVE_OUTPUT">
-          <div class="new-wire-zone" @mousedown.stop="handleStartWiring('MOVE_OUTPUT')"></div>
+          <div class="new-wire-zone" @mousedown.stop @click.stop="handleWirePinClick('MOVE_OUTPUT')"></div>
           <div class="pin-circle"></div>
           <span>MOVE_OUTPUT</span>
         </div>
@@ -35,12 +35,12 @@
       <div class="pins-container-out">
         <div v-for="i in 10" :key="i" class="component-pin out" :data-pin-name="`SIGNAL_OUT_${i - 1}`">
           <span>{{ `SIGNAL_OUT_${i - 1}` }}</span>
-          <div class="new-wire-zone" @mousedown.stop="handleStartWiring(`SIGNAL_OUT_${i - 1}`)"></div>
+          <div class="new-wire-zone" @mousedown.stop @click.stop="handleWirePinClick(`SIGNAL_OUT_${i - 1}`)"></div>
           <div class="pin-circle"></div>
         </div>
         <div class="component-pin out" data-pin-name="SELECTED_OUTPUT_OUT">
           <span>SELECTED_OUTPUT_OUT</span>
-          <div class="new-wire-zone" @mousedown.stop="handleStartWiring('SELECTED_OUTPUT_OUT')"></div>
+          <div class="new-wire-zone" @mousedown.stop @click.stop="handleWirePinClick('SELECTED_OUTPUT_OUT')"></div>
           <div class="pin-circle"></div>
         </div>
       </div>
@@ -77,6 +77,7 @@ import { useCircuitStore } from '../../stores/circuit'
 import ComponentPins from '../ComponentPins.vue'
 import ConfigPanel from '../ConfigPanel.vue'
 import { reactive, watch, computed } from 'vue'
+import { handleWirePinClick } from '../../utils/wiringHandlers'
 
 const props = defineProps({
   id: String,
@@ -106,11 +107,5 @@ watch(() => props.settings, (newSettings) => {
 
 function updateSettings () {
   circuit.updateComponentSettings(props.id, { ...localSettings })
-}
-
-function handleStartWiring (pinName) {
-  if (props.mode === 'board') {
-    circuit.startWiring(props.id, pinName)
-  }
 }
 </script>
