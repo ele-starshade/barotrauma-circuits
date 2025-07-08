@@ -24,4 +24,4 @@ describe('FloorComponent', () => {
 
     expect(wrapper.find('[data-component-type="floor"]').exists()).toBe(true)
   })
-}) 
+})

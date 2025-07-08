@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import { mount, config } from '@vue/test-utils'
 import ComponentTray from '@/components/ComponentTray.vue'
 import { createPinia, setActivePinia } from 'pinia'

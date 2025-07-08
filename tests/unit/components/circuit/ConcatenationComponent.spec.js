@@ -25,4 +25,4 @@ describe('ConcatenationComponent', () => {
 
     expect(wrapper.find('[data-component-type="concatenation"]').exists()).toBe(true)
   })
-}) 
+})

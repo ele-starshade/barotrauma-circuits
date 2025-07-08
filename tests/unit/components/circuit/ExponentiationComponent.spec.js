@@ -25,4 +25,4 @@ describe('ExponentiationComponent', () => {
 
     expect(wrapper.find('[data-component-type="exponentiation"]').exists()).toBe(true)
   })
-}) 
+})

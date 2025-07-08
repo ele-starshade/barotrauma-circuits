@@ -24,4 +24,4 @@ describe('AsinComponent', () => {
 
     expect(wrapper.find('[data-component-type="asin"]').exists()).toBe(true)
   })
-}) 
+})

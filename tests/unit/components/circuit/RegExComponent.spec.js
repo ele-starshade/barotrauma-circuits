@@ -25,4 +25,4 @@ describe('RegExComponent', () => {
 
     expect(wrapper.find('[data-component-type="regex"]').exists()).toBe(true)
   })
-}) 
+})

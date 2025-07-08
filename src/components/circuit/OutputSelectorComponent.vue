@@ -17,17 +17,17 @@
     <div class="component-body">
       <div class="pins-container-in">
         <div class="component-pin in" data-pin-name="SIGNAL_IN">
-          <div class="new-wire-zone" @mousedown.stop @click.stop="handleWirePinClick('SIGNAL_IN')"></div>
+          <div class="new-wire-zone" @mousedown.stop @click.stop="handleWirePinClick(circuit, props.id, 'SIGNAL_IN', $event)"></div>
           <div class="pin-circle"></div>
           <span>SIGNAL_IN</span>
         </div>
         <div class="component-pin in" data-pin-name="SET_OUTPUT">
-          <div class="new-wire-zone" @mousedown.stop @click.stop="handleWirePinClick('SET_OUTPUT')"></div>
+          <div class="new-wire-zone" @mousedown.stop @click.stop="handleWirePinClick(circuit, props.id, 'SET_OUTPUT', $event)"></div>
           <div class="pin-circle"></div>
           <span>SET_OUTPUT</span>
         </div>
         <div class="component-pin in" data-pin-name="MOVE_OUTPUT">
-          <div class="new-wire-zone" @mousedown.stop @click.stop="handleWirePinClick('MOVE_OUTPUT')"></div>
+          <div class="new-wire-zone" @mousedown.stop @click.stop="handleWirePinClick(circuit, props.id, 'MOVE_OUTPUT', $event)"></div>
           <div class="pin-circle"></div>
           <span>MOVE_OUTPUT</span>
         </div>
@@ -35,12 +35,12 @@
       <div class="pins-container-out">
         <div v-for="i in 10" :key="i" class="component-pin out" :data-pin-name="`SIGNAL_OUT_${i - 1}`">
           <span>{{ `SIGNAL_OUT_${i - 1}` }}</span>
-          <div class="new-wire-zone" @mousedown.stop @click.stop="handleWirePinClick(`SIGNAL_OUT_${i - 1}`)"></div>
+          <div class="new-wire-zone" @mousedown.stop @click.stop="handleWirePinClick(circuit, props.id, `SIGNAL_OUT_${i - 1}`, $event)"></div>
           <div class="pin-circle"></div>
         </div>
         <div class="component-pin out" data-pin-name="SELECTED_OUTPUT_OUT">
           <span>SELECTED_OUTPUT_OUT</span>
-          <div class="new-wire-zone" @mousedown.stop @click.stop="handleWirePinClick('SELECTED_OUTPUT_OUT')"></div>
+          <div class="new-wire-zone" @mousedown.stop @click.stop="handleWirePinClick(circuit, props.id, 'SELECTED_OUTPUT_OUT', $event)"></div>
           <div class="pin-circle"></div>
         </div>
       </div>

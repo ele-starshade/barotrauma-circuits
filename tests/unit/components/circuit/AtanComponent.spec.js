@@ -24,4 +24,4 @@ describe('AtanComponent', () => {
 
     expect(wrapper.find('[data-component-type="atan"]').exists()).toBe(true)
   })
-}) 
+})

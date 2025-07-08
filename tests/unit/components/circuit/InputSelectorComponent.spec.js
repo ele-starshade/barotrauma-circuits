@@ -15,16 +15,16 @@ describe('InputSelectorComponent', () => {
     const wrapper = mountWithCircuit(InputSelectorComponent, { props: { id: 'input-selector2', mode: 'board' } })
 
     expect(wrapper.find('.component.text-based').exists()).toBe(true)
-    
+
     // Check input pins 0-9
     for (let i = 0; i < 10; i++) {
       expect(wrapper.find(`[data-pin-name="SIGNAL_IN_${i}"]`).exists()).toBe(true)
     }
-    
+
     // Check control pins
     expect(wrapper.find('[data-pin-name="SET_INPUT"]').exists()).toBe(true)
     expect(wrapper.find('[data-pin-name="MOVE_INPUT"]').exists()).toBe(true)
-    
+
     // Check output pins
     expect(wrapper.find('[data-pin-name="SIGNAL_OUT"]').exists()).toBe(true)
     expect(wrapper.find('[data-pin-name="SELECTED_INPUT_OUT"]').exists()).toBe(true)
@@ -35,4 +35,4 @@ describe('InputSelectorComponent', () => {
 
     expect(wrapper.find('[data-component-type="input-selector"]').exists()).toBe(true)
   })
-}) 
+})

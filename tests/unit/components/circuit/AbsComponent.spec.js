@@ -18,4 +18,4 @@ describe('AbsComponent', () => {
     expect(wrapper.find('[data-pin-name="SIGNAL_IN"]').exists()).toBe(true)
     expect(wrapper.find('[data-pin-name="SIGNAL_OUT"]').exists()).toBe(true)
   })
-}) 
+})

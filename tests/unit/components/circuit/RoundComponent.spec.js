@@ -24,4 +24,4 @@ describe('RoundComponent', () => {
 
     expect(wrapper.find('[data-component-type="round"]').exists()).toBe(true)
   })
-}) 
+})

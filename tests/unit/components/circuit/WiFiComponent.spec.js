@@ -25,4 +25,4 @@ describe('WiFiComponent', () => {
 
     expect(wrapper.find('[data-component-type="wifi"]').exists()).toBe(true)
   })
-}) 
+})

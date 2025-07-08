@@ -25,4 +25,4 @@ describe('OscillatorComponent', () => {
 
     expect(wrapper.find('[data-component-type="oscillator"]').exists()).toBe(true)
   })
-}) 
+})

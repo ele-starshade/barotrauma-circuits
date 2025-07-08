@@ -16,18 +16,18 @@
     <div class="component-header">Oscillator</div>
     <div class="component-body">
       <div class="component-pin in" data-pin-name="SET_FREQUENCY">
-        <div class="new-wire-zone" @mousedown.stop @click.stop="handleWirePinClick('SET_FREQUENCY')"></div>
+        <div class="new-wire-zone" @mousedown.stop @click.stop="handleWirePinClick(circuit, props.id, 'SET_FREQUENCY', $event)"></div>
         <div class="pin-circle"></div>
         <span>SET_FREQUENCY</span>
       </div>
       <div class="component-pin in" data-pin-name="SET_OUTPUTTYPE">
-        <div class="new-wire-zone" @mousedown.stop @click.stop="handleWirePinClick('SET_OUTPUTTYPE')"></div>
+        <div class="new-wire-zone" @mousedown.stop @click.stop="handleWirePinClick(circuit, props.id, 'SET_OUTPUTTYPE', $event)"></div>
         <div class="pin-circle"></div>
         <span>SET_OUTPUTTYPE</span>
       </div>
       <div class="component-pin out" data-pin-name="SIGNAL_OUT">
         <span>SIGNAL_OUT</span>
-        <div class="new-wire-zone" @mousedown.stop @click.stop="handleWirePinClick('SIGNAL_OUT')"></div>
+        <div class="new-wire-zone" @mousedown.stop @click.stop="handleWirePinClick(circuit, props.id, 'SIGNAL_OUT', $event)"></div>
         <div class="pin-circle"></div>
       </div>
     </div>

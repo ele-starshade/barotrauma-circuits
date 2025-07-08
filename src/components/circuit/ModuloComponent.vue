@@ -15,19 +15,19 @@
   <div v-else v-bind="$attrs" class="component text-based" data-component-type="modulo" :id="props.id">
     <div class="component-header">Modulo</div>
     <div class="component-body">
-      <div class="component-pin in" data-pin-name="SIGNAL_IN">
-        <div class="new-wire-zone" @mousedown.stop @click.stop="handleWirePinClick('SIGNAL_IN')"></div>
+      <div class="component-pin in" data-pin-name="SIGNAL_IN_1">
+        <div class="new-wire-zone" @mousedown.stop @click.stop="handleWirePinClick(circuit, props.id, 'SIGNAL_IN_1', $event)"></div>
         <div class="pin-circle"></div>
-        <span>SIGNAL_IN</span>
+        <span>SIGNAL_IN_1</span>
       </div>
-      <div class="component-pin in" data-pin-name="SET_MODULUS">
-        <div class="new-wire-zone" @mousedown.stop @click.stop="handleWirePinClick('SET_MODULUS')"></div>
+      <div class="component-pin in" data-pin-name="SIGNAL_IN_2">
+        <div class="new-wire-zone" @mousedown.stop @click.stop="handleWirePinClick(circuit, props.id, 'SIGNAL_IN_2', $event)"></div>
         <div class="pin-circle"></div>
-        <span>SET_MODULUS</span>
+        <span>SIGNAL_IN_2</span>
       </div>
       <div class="component-pin out" data-pin-name="SIGNAL_OUT">
         <span>SIGNAL_OUT</span>
-        <div class="new-wire-zone" @mousedown.stop @click.stop="handleWirePinClick('SIGNAL_OUT')"></div>
+        <div class="new-wire-zone" @mousedown.stop @click.stop="handleWirePinClick(circuit, props.id, 'SIGNAL_OUT', $event)"></div>
         <div class="pin-circle"></div>
       </div>
     </div>

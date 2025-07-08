@@ -24,4 +24,4 @@ describe('TanComponent', () => {
 
     expect(wrapper.find('[data-component-type="tan"]').exists()).toBe(true)
   })
-}) 
+})

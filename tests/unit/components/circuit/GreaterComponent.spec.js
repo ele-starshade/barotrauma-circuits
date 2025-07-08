@@ -26,4 +26,4 @@ describe('GreaterComponent', () => {
 
     expect(wrapper.find('[data-component-type="greater"]').exists()).toBe(true)
   })
-}) 
+})

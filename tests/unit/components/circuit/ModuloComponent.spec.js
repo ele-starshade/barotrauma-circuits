@@ -25,4 +25,4 @@ describe('ModuloComponent', () => {
 
     expect(wrapper.find('[data-component-type="modulo"]').exists()).toBe(true)
   })
-}) 
+})

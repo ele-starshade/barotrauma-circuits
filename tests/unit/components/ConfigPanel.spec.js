@@ -53,6 +53,7 @@ describe('ConfigPanel', () => {
     const wrapper = mount(ConfigPanel, { props: { title: 'Test' } })
 
     const kbdElement = wrapper.find('kbd')
+
     expect(kbdElement.exists()).toBe(true)
     expect(kbdElement.text()).toBe('Delete')
   })
@@ -62,4 +63,4 @@ describe('ConfigPanel', () => {
 
     expect(wrapper.text()).toContain('Custom Title')
   })
-}) 
+})

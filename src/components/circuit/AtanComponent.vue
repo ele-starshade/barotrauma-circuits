@@ -16,23 +16,23 @@
     <div class="component-header">Atan</div>
     <div class="component-body">
       <div class="component-pin in" data-pin-name="SIGNAL_IN">
-        <div class="new-wire-zone" @mousedown.stop @click.stop="handleWirePinClick('SIGNAL_IN')"></div>
+        <div class="new-wire-zone" @mousedown.stop @click.stop="handleWirePinClick(circuit, props.id, 'SIGNAL_IN', $event)"></div>
         <div class="pin-circle"></div>
         <span>SIGNAL_IN</span>
       </div>
       <div class="component-pin in" data-pin-name="SIGNAL_IN_Y">
-        <div class="new-wire-zone" @mousedown.stop @click.stop="handleWirePinClick('SIGNAL_IN_Y')"></div>
+        <div class="new-wire-zone" @mousedown.stop @click.stop="handleWirePinClick(circuit, props.id, 'SIGNAL_IN_Y', $event)"></div>
         <div class="pin-circle"></div>
         <span>SIGNAL_IN_Y</span>
       </div>
       <div class="component-pin in" data-pin-name="SIGNAL_IN_X">
-        <div class="new-wire-zone" @mousedown.stop @click.stop="handleWirePinClick('SIGNAL_IN_X')"></div>
+        <div class="new-wire-zone" @mousedown.stop @click.stop="handleWirePinClick(circuit, props.id, 'SIGNAL_IN_X', $event)"></div>
         <div class="pin-circle"></div>
         <span>SIGNAL_IN_X</span>
       </div>
       <div class="component-pin out" data-pin-name="SIGNAL_OUT">
         <span>SIGNAL_OUT</span>
-        <div class="new-wire-zone" @mousedown.stop @click.stop="handleWirePinClick('SIGNAL_OUT')"></div>
+        <div class="new-wire-zone" @mousedown.stop @click.stop="handleWirePinClick(circuit, props.id, 'SIGNAL_OUT', $event)"></div>
         <div class="pin-circle"></div>
       </div>
     </div>

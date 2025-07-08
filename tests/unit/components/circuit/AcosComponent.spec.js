@@ -24,4 +24,4 @@ describe('AcosComponent', () => {
 
     expect(wrapper.find('[data-component-type="acos"]').exists()).toBe(true)
   })
-}) 
+})

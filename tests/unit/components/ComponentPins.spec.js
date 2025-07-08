@@ -13,8 +13,9 @@ describe('ComponentPins', () => {
     const wrapper = mount(ComponentPins, { props: { count: 2 } })
 
     const pins = wrapper.findAll('.component-pin')
+
     expect(pins).toHaveLength(2)
-    
+
     pins.forEach(pin => {
       expect(pin.exists()).toBe(true)
     })
@@ -49,6 +50,7 @@ describe('ComponentPins', () => {
     const wrapper = mount(ComponentPins, { props: { count: 3 } })
 
     const pinsContainer = wrapper.find('.pins')
+
     expect(pinsContainer.exists()).toBe(true)
   })
-}) 
+})

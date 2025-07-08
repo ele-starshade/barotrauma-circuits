@@ -16,18 +16,18 @@
     <div class="component-header">WiFi</div>
     <div class="component-body">
       <div class="component-pin in" data-pin-name="SIGNAL_IN">
-        <div class="new-wire-zone" @mousedown.stop @click.stop="handleWirePinClick('SIGNAL_IN')"></div>
+        <div class="new-wire-zone" @mousedown.stop @click.stop="handleWirePinClick(circuit, props.id, 'SIGNAL_IN', $event)"></div>
         <div class="pin-circle"></div>
         <span>SIGNAL_IN</span>
       </div>
       <div class="component-pin in" data-pin-name="SET_CHANNEL">
-        <div class="new-wire-zone" @mousedown.stop @click.stop="handleWirePinClick('SET_CHANNEL')"></div>
+        <div class="new-wire-zone" @mousedown.stop @click.stop="handleWirePinClick(circuit, props.id, 'SET_CHANNEL', $event)"></div>
         <div class="pin-circle"></div>
         <span>SET_CHANNEL</span>
       </div>
       <div class="component-pin out" data-pin-name="SIGNAL_OUT">
         <span>SIGNAL_OUT</span>
-        <div class="new-wire-zone" @mousedown.stop @click.stop="handleWirePinClick('SIGNAL_OUT')"></div>
+        <div class="new-wire-zone" @mousedown.stop @click.stop="handleWirePinClick(circuit, props.id, 'SIGNAL_OUT', $event)"></div>
         <div class="pin-circle"></div>
       </div>
     </div>

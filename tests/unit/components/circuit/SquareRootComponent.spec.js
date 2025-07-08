@@ -24,4 +24,4 @@ describe('SquareRootComponent', () => {
 
     expect(wrapper.find('[data-component-type="square-root"]').exists()).toBe(true)
   })
-}) 
+})

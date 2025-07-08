@@ -27,4 +27,4 @@ describe('ColorComponent', () => {
 
     expect(wrapper.find('[data-component-type="color"]').exists()).toBe(true)
   })
-}) 
+})

@@ -24,4 +24,4 @@ describe('CeilComponent', () => {
 
     expect(wrapper.find('[data-component-type="ceil"]').exists()).toBe(true)
   })
-}) 
+})

@@ -24,4 +24,4 @@ describe('FactorialComponent', () => {
 
     expect(wrapper.find('[data-component-type="factorial"]').exists()).toBe(true)
   })
-}) 
+})

@@ -16,28 +16,28 @@
     <div class="component-header">Color</div>
     <div class="component-body">
       <div class="component-pin in" data-pin-name="SIGNAL_IN_R">
-        <div class="new-wire-zone" @mousedown.stop @click.stop="handleWirePinClick('SIGNAL_IN_R')"></div>
+        <div class="new-wire-zone" @mousedown.stop @click.stop="handleWirePinClick(circuit, props.id, 'SIGNAL_IN_R', $event)"></div>
         <div class="pin-circle"></div>
-        <span>SIGNAL_R</span>
+        <span>SIGNAL_IN_R</span>
       </div>
       <div class="component-pin in" data-pin-name="SIGNAL_IN_G">
-        <div class="new-wire-zone" @mousedown.stop @click.stop="handleWirePinClick('SIGNAL_IN_G')"></div>
+        <div class="new-wire-zone" @mousedown.stop @click.stop="handleWirePinClick(circuit, props.id, 'SIGNAL_IN_G', $event)"></div>
         <div class="pin-circle"></div>
-        <span>SIGNAL_G</span>
+        <span>SIGNAL_IN_G</span>
       </div>
       <div class="component-pin in" data-pin-name="SIGNAL_IN_B">
-        <div class="new-wire-zone" @mousedown.stop @click.stop="handleWirePinClick('SIGNAL_IN_B')"></div>
+        <div class="new-wire-zone" @mousedown.stop @click.stop="handleWirePinClick(circuit, props.id, 'SIGNAL_IN_B', $event)"></div>
         <div class="pin-circle"></div>
-        <span>SIGNAL_B</span>
+        <span>SIGNAL_IN_B</span>
       </div>
       <div class="component-pin in" data-pin-name="SIGNAL_IN_A">
-        <div class="new-wire-zone" @mousedown.stop @click.stop="handleWirePinClick('SIGNAL_IN_A')"></div>
+        <div class="new-wire-zone" @mousedown.stop @click.stop="handleWirePinClick(circuit, props.id, 'SIGNAL_IN_A', $event)"></div>
         <div class="pin-circle"></div>
-        <span>SIGNAL_A</span>
+        <span>SIGNAL_IN_A</span>
       </div>
       <div class="component-pin out" data-pin-name="SIGNAL_OUT">
         <span>SIGNAL_OUT</span>
-        <div class="new-wire-zone" @mousedown.stop @click.stop="handleWirePinClick('SIGNAL_OUT')"></div>
+        <div class="new-wire-zone" @mousedown.stop @click.stop="handleWirePinClick(circuit, props.id, 'SIGNAL_OUT', $event)"></div>
         <div class="pin-circle"></div>
       </div>
     </div>

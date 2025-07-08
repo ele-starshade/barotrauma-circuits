@@ -24,4 +24,4 @@ describe('CosComponent', () => {
 
     expect(wrapper.find('[data-component-type="cos"]').exists()).toBe(true)
   })
-}) 
+})

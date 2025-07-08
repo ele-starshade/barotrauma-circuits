@@ -51,13 +51,14 @@ describe('TopBar', () => {
 
   it('shows running indicator when simulation is running', async () => {
     const wrapper = mount(TopBar)
-    
+
     // Mock the circuit store to simulate running state
     const circuitStore = wrapper.vm.circuit
+
     circuitStore.simulationRunning = true
-    
+
     await wrapper.vm.$nextTick()
-    
+
     expect(wrapper.text()).toContain('Running...')
     expect(wrapper.text()).toContain('Stop Simulation')
     expect(wrapper.find('.indicator-container').exists()).toBe(true)
@@ -98,4 +99,4 @@ describe('TopBar', () => {
 
     expect(startSpy).toHaveBeenCalled()
   })
-}) 
+})

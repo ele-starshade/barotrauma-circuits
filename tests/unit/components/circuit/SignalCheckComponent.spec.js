@@ -26,4 +26,4 @@ describe('SignalCheckComponent', () => {
 
     expect(wrapper.find('[data-component-type="signalcheck"]').exists()).toBe(true)
   })
-}) 
+})
