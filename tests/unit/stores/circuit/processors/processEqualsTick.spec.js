@@ -82,4 +82,42 @@ describe('processEqualsTick', () => {
 
     expect(result.SIGNAL_OUT).toBe('')
   })
+
+  it('should output "1" when signals are equal and timeframe is 0 (no timestamp check)', () => {
+    component.settings.timeframe = 0
+    component.inputs = { SIGNAL_IN_1: 'test', SIGNAL_IN_2: 'test' }
+    // No timestamps needed when timeframe is 0
+    component.lastSignalTimestamps = {}
+    const result = processEqualsTick(component)
+
+    expect(result.SIGNAL_OUT).toBe('1')
+  })
+
+  it('should output "0" when signals are not equal and timeframe is 0', () => {
+    component.settings.timeframe = 0
+    component.inputs = { SIGNAL_IN_1: 'test1', SIGNAL_IN_2: 'test2' }
+    // No timestamps needed when timeframe is 0
+    component.lastSignalTimestamps = {}
+    const result = processEqualsTick(component)
+
+    expect(result.SIGNAL_OUT).toBe('0')
+  })
+
+  it('should output "1" when numbers are equal and timeframe is 0', () => {
+    component.settings.timeframe = 0
+    component.inputs = { SIGNAL_IN_1: 42, SIGNAL_IN_2: 42 }
+    component.lastSignalTimestamps = {}
+    const result = processEqualsTick(component)
+
+    expect(result.SIGNAL_OUT).toBe('1')
+  })
+
+  it('should output "1" when number and string are equal with loose equality and timeframe is 0', () => {
+    component.settings.timeframe = 0
+    component.inputs = { SIGNAL_IN_1: 42, SIGNAL_IN_2: '42' }
+    component.lastSignalTimestamps = {}
+    const result = processEqualsTick(component)
+
+    expect(result.SIGNAL_OUT).toBe('1')
+  })
 })
