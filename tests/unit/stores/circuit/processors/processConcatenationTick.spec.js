@@ -77,4 +77,27 @@ describe('processConcatenationTick', () => {
 
     expect(result).toBeUndefined()
   })
+
+  it('should process concatenation when timeframe is 0.0 regardless of time difference', () => {
+    const component = {
+      ...baseComponent,
+      inputs: { SIGNAL_IN_1: 'hello', SIGNAL_IN_2: 'world' },
+      lastSignalTimestamps: { SIGNAL_IN_1: 100, SIGNAL_IN_2: 200 },
+      settings: { ...baseComponent.settings, timeframe: 0.0 }
+    }
+    const result = processConcatenationTick(component)
+
+    expect(result.SIGNAL_OUT).toBe('hello-world')
+  })
+
+  it('should handle null and undefined inputs by converting them to empty strings', () => {
+    const component = {
+      ...baseComponent,
+      inputs: { SIGNAL_IN_1: null, SIGNAL_IN_2: null },
+      lastSignalTimestamps: { SIGNAL_IN_1: 100, SIGNAL_IN_2: 101 }
+    }
+    const result = processConcatenationTick(component)
+
+    expect(result.SIGNAL_OUT).toBe('-')
+  })
 })

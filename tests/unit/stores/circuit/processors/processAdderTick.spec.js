@@ -13,6 +13,17 @@ describe('processAdderTick', () => {
     expect(result.SIGNAL_OUT).toBe(15)
   })
 
+  it('should not clamp the sum if it is below the max value', () => {
+    const component = {
+      inputs: { SIGNAL_IN_1: 5, SIGNAL_IN_2: 5 },
+      lastSignalTimestamps: { SIGNAL_IN_1: 100, SIGNAL_IN_2: 101 },
+      settings: { timeframe: 10, clampMax: 15 }
+    }
+    const result = processAdderTick(component)
+
+    expect(result.SIGNAL_OUT).toBe(10)
+  })
+
   it('should clamp the sum to the max value', () => {
     const component = {
       inputs: { SIGNAL_IN_1: 10, SIGNAL_IN_2: 10 },
@@ -22,6 +33,17 @@ describe('processAdderTick', () => {
     const result = processAdderTick(component)
 
     expect(result.SIGNAL_OUT).toBe(15)
+  })
+
+  it('should not clamp the sum if it is above the min value', () => {
+    const component = {
+      inputs: { SIGNAL_IN_1: -5, SIGNAL_IN_2: -5 },
+      lastSignalTimestamps: { SIGNAL_IN_1: 100, SIGNAL_IN_2: 101 },
+      settings: { timeframe: 10, clampMin: -15 }
+    }
+    const result = processAdderTick(component)
+
+    expect(result.SIGNAL_OUT).toBe(-10)
   })
 
   it('should clamp the sum to the min value', () => {
@@ -55,6 +77,17 @@ describe('processAdderTick', () => {
     const result = processAdderTick(component)
 
     expect(result.SIGNAL_OUT).toBe(15)
+  })
+
+  it('should handle non-numeric inputs by treating them as 0', () => {
+    const component = {
+      inputs: { SIGNAL_IN_1: 'hello', SIGNAL_IN_2: 'hello' },
+      lastSignalTimestamps: { SIGNAL_IN_1: 100, SIGNAL_IN_2: 101 },
+      settings: { timeframe: 10 }
+    }
+    const result = processAdderTick(component)
+
+    expect(result.SIGNAL_OUT).toBe(0)
   })
 
   it('should return undefined if signals are missing', () => {

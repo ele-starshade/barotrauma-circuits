@@ -87,4 +87,100 @@ describe('processAndTick', () => {
 
     expect(result.SIGNAL_OUT).toBe('0')
   })
+
+  it('should return empty string when falseOutput is undefined', () => {
+    const component = {
+      ...baseComponent,
+      settings: {
+        ...baseComponent.settings,
+        falseOutput: undefined
+      },
+      inputs: { SIGNAL_IN_1: 1, SIGNAL_IN_2: 0 },
+      lastSignalTimestamps: { SIGNAL_IN_1: 100, SIGNAL_IN_2: 105 }
+    }
+    const result = processAndTick(component)
+
+    expect(result.SIGNAL_OUT).toBe('')
+  })
+
+  it('should return empty string when falseOutput is empty string', () => {
+    const component = {
+      ...baseComponent,
+      settings: {
+        ...baseComponent.settings,
+        falseOutput: ''
+      },
+      inputs: { SIGNAL_IN_1: 1, SIGNAL_IN_2: 0 },
+      lastSignalTimestamps: { SIGNAL_IN_1: 100, SIGNAL_IN_2: 105 }
+    }
+    const result = processAndTick(component)
+
+    expect(result.SIGNAL_OUT).toBe('')
+  })
+
+  it('should output true when only in1Timestamp is present and both inputs are truthy', () => {
+    const component = {
+      ...baseComponent,
+      inputs: { SIGNAL_IN_1: 1, SIGNAL_IN_2: 1 },
+      lastSignalTimestamps: { SIGNAL_IN_1: 100 }
+    }
+    const result = processAndTick(component)
+
+    expect(result.SIGNAL_OUT).toBe('1')
+  })
+
+  it('should output false when only in1Timestamp is present and one input is falsy', () => {
+    const component = {
+      ...baseComponent,
+      inputs: { SIGNAL_IN_1: 1, SIGNAL_IN_2: 0 },
+      lastSignalTimestamps: { SIGNAL_IN_1: 100 }
+    }
+    const result = processAndTick(component)
+
+    expect(result.SIGNAL_OUT).toBe('0')
+  })
+
+  it('should output true when only in2Timestamp is present and both inputs are truthy', () => {
+    const component = {
+      ...baseComponent,
+      inputs: { SIGNAL_IN_1: 1, SIGNAL_IN_2: 1 },
+      lastSignalTimestamps: { SIGNAL_IN_2: 100 }
+    }
+    const result = processAndTick(component)
+
+    expect(result.SIGNAL_OUT).toBe('1')
+  })
+
+  it('should output false when only in2Timestamp is present and one input is falsy', () => {
+    const component = {
+      ...baseComponent,
+      inputs: { SIGNAL_IN_1: 0, SIGNAL_IN_2: 1 },
+      lastSignalTimestamps: { SIGNAL_IN_2: 100 }
+    }
+    const result = processAndTick(component)
+
+    expect(result.SIGNAL_OUT).toBe('0')
+  })
+
+  it('should output false when no signal timestamps are present', () => {
+    const component = {
+      ...baseComponent,
+      inputs: { SIGNAL_IN_1: 1, SIGNAL_IN_2: 1 },
+      lastSignalTimestamps: {}
+    }
+    const result = processAndTick(component)
+
+    expect(result.SIGNAL_OUT).toBe('0')
+  })
+
+  it('should output false when lastSignalTimestamps is undefined', () => {
+    const component = {
+      ...baseComponent,
+      inputs: { SIGNAL_IN_1: 1, SIGNAL_IN_2: 1 },
+      lastSignalTimestamps: undefined
+    }
+    const result = processAndTick(component)
+
+    expect(result.SIGNAL_OUT).toBe('0')
+  })
 })

@@ -61,4 +61,44 @@ describe('processAtanTick', () => {
 
     expect(result).toBeUndefined()
   })
+
+  it('should handle NaN values in atan2 mode', () => {
+    const component = {
+      inputs: { SIGNAL_IN_Y: 'invalid', SIGNAL_IN_X: 'also invalid' },
+      settings: { useRadians: true }
+    }
+    const result = processAtanTick(component)
+
+    expect(result.SIGNAL_OUT).toBeCloseTo(Math.atan2(0, 0))
+  })
+
+  it('should handle NaN values in atan mode', () => {
+    const component = {
+      inputs: { SIGNAL_IN: 'invalid' },
+      settings: { useRadians: true }
+    }
+    const result = processAtanTick(component)
+
+    expect(result.SIGNAL_OUT).toBeCloseTo(Math.atan(0))
+  })
+
+  it('should handle mixed valid and invalid values in atan2 mode', () => {
+    const component = {
+      inputs: { SIGNAL_IN_Y: 1, SIGNAL_IN_X: 'invalid' },
+      settings: { useRadians: true }
+    }
+    const result = processAtanTick(component)
+
+    expect(result.SIGNAL_OUT).toBeCloseTo(Math.atan2(1, 0))
+  })
+
+  it('should handle undefined settings', () => {
+    const component = {
+      inputs: { SIGNAL_IN: 1 }
+      // settings is undefined
+    }
+    const result = processAtanTick(component)
+
+    expect(result.SIGNAL_OUT).toBeCloseTo(45)
+  })
 })

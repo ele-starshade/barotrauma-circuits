@@ -48,6 +48,17 @@ describe('processColorTick', () => {
     expect(hsvToRgb).toHaveBeenCalledWith(360, 1, 0)
   })
 
+  it('should handle non-numeric HSV inputs', () => {
+    hsvToRgb.mockReturnValue({ r: 0, g: 0, b: 0 })
+    const component = {
+      inputs: { SIGNAL_IN_R: 'foo', SIGNAL_IN_G: 'bar', SIGNAL_IN_B: 'baz', SIGNAL_IN_A: 255 },
+      settings: { useHSV: true }
+    }
+
+    processColorTick(component)
+    expect(hsvToRgb).toHaveBeenCalledWith(0, 0, 0)
+  })
+
   it('should return undefined if no inputs are provided', () => {
     const component = {
       inputs: {},
@@ -66,5 +77,15 @@ describe('processColorTick', () => {
     const result = processColorTick(component)
 
     expect(result.SIGNAL_OUT).toBe('100,0,0,0')
+  })
+
+  it('should handle non-numeric inputs for RGB', () => {
+    const component = {
+      inputs: { SIGNAL_IN_R: 'foo', SIGNAL_IN_G: 'bar', SIGNAL_IN_B: 'baz', SIGNAL_IN_A: 'a' },
+      settings: { useHSV: false }
+    }
+    const result = processColorTick(component)
+
+    expect(result.SIGNAL_OUT).toBe('0,0,0,0')
   })
 })

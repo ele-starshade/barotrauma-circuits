@@ -15,7 +15,7 @@
  * @returns {number|undefined} The arctangent of the input, or undefined if inputs are not valid
  */
 export default function processAtanTick (component) {
-  const { inputs, settings } = component
+  const { inputs, settings = { useRadians: false } } = component
   const signalIn = inputs?.SIGNAL_IN
   const signalY = inputs?.SIGNAL_IN_Y
   const signalX = inputs?.SIGNAL_IN_X
