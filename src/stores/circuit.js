@@ -44,6 +44,7 @@ import SinComponent from '../components/circuit/SinComponent.vue'
 import SquareRootComponent from '../components/circuit/SquareRootComponent.vue'
 import TanComponent from '../components/circuit/TanComponent.vue'
 import WiFiComponent from '../components/circuit/WiFiComponent.vue'
+import ButtonComponent from '../components/circuit/tools/ButtonComponent.vue'
 
 import processAbsTick from './circuit/processors/processAbsTick.js'
 import processAcosTick from './circuit/processors/processAcosTick.js'
@@ -84,6 +85,7 @@ import processWiFiTick from './circuit/processors/processWiFiTick.js'
 import processXorTick from './circuit/processors/processXorTick.js'
 import processDisplayTick from './circuit/processors/processDisplayTick.js'
 import processLightTick from './circuit/processors/processLightTick.js'
+import processButtonTick from './circuit/processors/processButtonTick.js'
 
 const componentMap = {
   Adder: AdderComponent,
@@ -124,7 +126,8 @@ const componentMap = {
   Sin: SinComponent,
   SquareRoot: SquareRootComponent,
   Tan: TanComponent,
-  WiFi: WiFiComponent
+  WiFi: WiFiComponent,
+  Button: ButtonComponent
 }
 
 const toast = useToast()
@@ -401,6 +404,10 @@ export const useCircuitStore = defineStore('circuit', {
 
       if (newComponent.name === 'WiFi') {
         // WiFi component has no specific state to initialize here
+      }
+
+      if (newComponent.name === 'Button') {
+        // Button component has no specific state to initialize here
       }
 
       this.boardComponents.push(newComponent)
@@ -1357,6 +1364,7 @@ export const useCircuitStore = defineStore('circuit', {
             case 'SquareRoot': newValues = processSquareRootTick(component); break
             case 'Tan': newValues = processTanTick(component); break
             case 'WiFi': newValues = processWiFiTick(component, this.wifiChannels); break
+            case 'Button': newValues = processButtonTick(component); break
             case 'Display': processDisplayTick(component); break
             case 'Light': processLightTick(component); break
           }

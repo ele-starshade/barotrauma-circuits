@@ -87,6 +87,7 @@ const SinComponent = markRaw(defineAsyncComponent(() => import('./circuit/SinCom
 const SquareRootComponent = markRaw(defineAsyncComponent(() => import('./circuit/SquareRootComponent.vue')))
 const TanComponent = markRaw(defineAsyncComponent(() => import('./circuit/TanComponent.vue')))
 const WiFiComponent = markRaw(defineAsyncComponent(() => import('./circuit/WiFiComponent.vue')))
+const ButtonComponent = markRaw(defineAsyncComponent(() => import('./circuit/tools/ButtonComponent.vue')))
 
 const circuit = useCircuitStore()
 
@@ -203,6 +204,14 @@ const trayComponents = shallowRef([
     settings: {
       color: '#ffffff',
       isOn: false
+    },
+    isTool: true
+  },
+  {
+    name: 'Button',
+    is: ButtonComponent,
+    settings: {
+      output: '1'
     },
     isTool: true
   },
