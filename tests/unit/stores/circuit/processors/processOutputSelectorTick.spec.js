@@ -103,4 +103,21 @@ describe('processOutputSelectorTick', () => {
     expect(result.SIGNAL_OUT_4).toBeUndefined()
     expect(result.SELECTED_OUTPUT_OUT).toBe(4)
   })
+
+  it('should not move if attempts exceed 10', () => {
+    // Create a scenario where all connections are empty except the current one
+    wires = [
+      { fromId: 'output-selector', fromPinName: 'SIGNAL_OUT_0' }
+    ]
+    component.settings.skipEmptyConnections = true
+    component.selectedConnection = 0
+    component.inputs.MOVE_OUTPUT = '1'
+
+    const originalConnection = component.selectedConnection
+
+    processOutputSelectorTick(component, wires)
+
+    // Should not move because no connected pins are found within 10 attempts
+    expect(component.selectedConnection).toBe(originalConnection)
+  })
 })

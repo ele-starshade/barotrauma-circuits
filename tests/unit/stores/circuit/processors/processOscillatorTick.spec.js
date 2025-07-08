@@ -48,6 +48,45 @@ describe('processOscillatorTick', () => {
     expect(result.SIGNAL_OUT).toBeCloseTo(0, 0.001)
   })
 
+  it('should handle invalid frequency in settings', () => {
+    component.settings.frequency = NaN
+    processOscillatorTick(component, tickInterval)
+    expect(component.cumulativePhase).toBe(1) // Should use default frequency of 1
+  })
+
+  it('should handle invalid frequency in SET_FREQUENCY input', () => {
+    component.inputs.SET_FREQUENCY = 'invalid'
+    processOscillatorTick(component, tickInterval)
+    expect(component.cumulativePhase).toBe(1) // Should use default frequency of 1
+  })
+
+  it('should handle empty SET_FREQUENCY input', () => {
+    component.inputs.SET_FREQUENCY = '   '
+    processOscillatorTick(component, tickInterval)
+    expect(component.cumulativePhase).toBe(1) // Should use default frequency of 1
+  })
+
+  it('should handle invalid outputType in settings', () => {
+    component.settings.outputType = 5 // Invalid
+    const result = processOscillatorTick(component, tickInterval)
+
+    expect(result.SIGNAL_OUT).toBe(1) // With frequency=1 and outputType=0 (Pulse), first tick outputs 1
+  })
+
+  it('should handle invalid outputType in SET_OUTPUTTYPE input', () => {
+    component.inputs.SET_OUTPUTTYPE = 'invalid'
+    const result = processOscillatorTick(component, tickInterval)
+
+    expect(result.SIGNAL_OUT).toBe(1) // With frequency=1 and outputType=0 (Pulse), first tick outputs 1
+  })
+
+  it('should handle empty SET_OUTPUTTYPE input', () => {
+    component.inputs.SET_OUTPUTTYPE = '   '
+    const result = processOscillatorTick(component, tickInterval)
+
+    expect(result.SIGNAL_OUT).toBe(1) // With frequency=1 and outputType=0 (Pulse), first tick outputs 1
+  })
+
   describe('Waveforms', () => {
     it('Pulse (0): should output 1 only when phase crosses an integer', () => {
       component.settings.frequency = 0.4

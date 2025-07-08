@@ -65,9 +65,19 @@ describe('processEqualsTick', () => {
     expect(result.SIGNAL_OUT).toBe('0')
   })
 
-  it('should output "" (empty string) if falseOutput is not defined', () => {
+  it('should output empty string if output and falseOutput are undefined', () => {
+    component.settings.output = undefined
     component.settings.falseOutput = undefined
-    component.inputs = { SIGNAL_IN_1: 'a', SIGNAL_IN_2: 'b' }
+    component.inputs = { SIGNAL_IN_1: 'a', SIGNAL_IN_2: 'a' }
+    const result = processEqualsTick(component)
+
+    expect(result.SIGNAL_OUT).toBe('')
+  })
+
+  it('should output empty string if output and falseOutput are empty string', () => {
+    component.settings.output = ''
+    component.settings.falseOutput = ''
+    component.inputs = { SIGNAL_IN_1: 'a', SIGNAL_IN_2: 'a' }
     const result = processEqualsTick(component)
 
     expect(result.SIGNAL_OUT).toBe('')

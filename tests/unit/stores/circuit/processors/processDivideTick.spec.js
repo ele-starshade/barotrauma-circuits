@@ -75,4 +75,15 @@ describe('processDivideTick', () => {
 
     expect(result).toBeUndefined()
   })
+
+  it('should return 0 when dividing 0 by a non-zero number', () => {
+    const component = {
+      ...baseComponent,
+      inputs: { SIGNAL_IN_1: 0, SIGNAL_IN_2: 5 },
+      lastSignalTimestamps: { SIGNAL_IN_1: 100, SIGNAL_IN_2: 105 }
+    }
+    const result = processDivideTick(component)
+
+    expect(result.SIGNAL_OUT).toBe('0')
+  })
 })

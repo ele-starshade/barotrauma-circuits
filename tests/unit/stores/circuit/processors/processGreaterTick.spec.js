@@ -76,4 +76,82 @@ describe('processGreaterTick', () => {
 
     expect(result.SIGNAL_OUT).toBe('0')
   })
+
+  it('should output empty string if falseOutput is undefined', () => {
+    const component = {
+      ...baseComponent,
+      settings: { ...baseComponent.settings, falseOutput: undefined },
+      inputs: { SIGNAL_IN_1: 5, SIGNAL_IN_2: 10 },
+      lastSignalTimestamps: { SIGNAL_IN_1: 100, SIGNAL_IN_2: 105 }
+    }
+    const result = processGreaterTick(component)
+
+    expect(result.SIGNAL_OUT).toBe('')
+  })
+
+  it('should output empty string if falseOutput is empty string', () => {
+    const component = {
+      ...baseComponent,
+      settings: { ...baseComponent.settings, falseOutput: '' },
+      inputs: { SIGNAL_IN_1: 5, SIGNAL_IN_2: 10 },
+      lastSignalTimestamps: { SIGNAL_IN_1: 100, SIGNAL_IN_2: 105 }
+    }
+    const result = processGreaterTick(component)
+
+    expect(result.SIGNAL_OUT).toBe('')
+  })
+
+  it('should output empty string if SET_OUTPUT and output are both undefined', () => {
+    const component = {
+      ...baseComponent,
+      settings: { ...baseComponent.settings, output: undefined },
+      inputs: { SIGNAL_IN_1: 10, SIGNAL_IN_2: 5 },
+      lastSignalTimestamps: { SIGNAL_IN_1: 100, SIGNAL_IN_2: 105 }
+    }
+
+    delete component.inputs.SET_OUTPUT
+    const result = processGreaterTick(component)
+
+    expect(result.SIGNAL_OUT).toBe('')
+  })
+
+  it('should output empty string if SET_OUTPUT and output are both empty string', () => {
+    const component = {
+      ...baseComponent,
+      settings: { ...baseComponent.settings, output: '' },
+      inputs: { SIGNAL_IN_1: 10, SIGNAL_IN_2: 5, SET_OUTPUT: '' },
+      lastSignalTimestamps: { SIGNAL_IN_1: 100, SIGNAL_IN_2: 105 }
+    }
+    const result = processGreaterTick(component)
+
+    expect(result.SIGNAL_OUT).toBe('')
+  })
+
+  it('should output empty string if output is undefined', () => {
+    const component = {
+      ...baseComponent,
+      settings: { ...baseComponent.settings, output: undefined },
+      inputs: { SIGNAL_IN_1: 10, SIGNAL_IN_2: 5 },
+      lastSignalTimestamps: { SIGNAL_IN_1: 100, SIGNAL_IN_2: 105 }
+    }
+
+    delete component.inputs.SET_OUTPUT
+    const result = processGreaterTick(component)
+
+    expect(result.SIGNAL_OUT).toBe('')
+  })
+
+  it('should output empty string if output is empty string', () => {
+    const component = {
+      ...baseComponent,
+      settings: { ...baseComponent.settings, output: '' },
+      inputs: { SIGNAL_IN_1: 10, SIGNAL_IN_2: 5 },
+      lastSignalTimestamps: { SIGNAL_IN_1: 100, SIGNAL_IN_2: 105 }
+    }
+
+    delete component.inputs.SET_OUTPUT
+    const result = processGreaterTick(component)
+
+    expect(result.SIGNAL_OUT).toBe('')
+  })
 })

@@ -75,4 +75,28 @@ describe('processMultiplyTick', () => {
 
     expect(result.SIGNAL_OUT).toBe(0)
   })
+
+  it('should not clamp when clampMin is undefined', () => {
+    const component = {
+      ...baseComponent,
+      inputs: { SIGNAL_IN_1: 5, SIGNAL_IN_2: 5 },
+      lastSignalTimestamps: { SIGNAL_IN_1: 100, SIGNAL_IN_2: 101 },
+      settings: { ...baseComponent.settings, clampMin: undefined }
+    }
+    const result = processMultiplyTick(component)
+
+    expect(result.SIGNAL_OUT).toBe(25)
+  })
+
+  it('should not clamp when clampMax and clampMin are both undefined', () => {
+    const component = {
+      ...baseComponent,
+      inputs: { SIGNAL_IN_1: 8, SIGNAL_IN_2: 3 },
+      lastSignalTimestamps: { SIGNAL_IN_1: 100, SIGNAL_IN_2: 101 },
+      settings: { ...baseComponent.settings, clampMax: undefined, clampMin: undefined }
+    }
+    const result = processMultiplyTick(component)
+
+    expect(result.SIGNAL_OUT).toBe(24)
+  })
 })

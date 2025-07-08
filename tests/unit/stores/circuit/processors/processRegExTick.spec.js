@@ -70,4 +70,94 @@ describe('processRegExTick', () => {
 
     expect(result.SIGNAL_OUT).toBe('last_value')
   })
+
+  it('should use capture group when useCaptureGroup is true', () => {
+    component.settings.useCaptureGroup = true
+    component.settings.expression = '(?<digit>\\d+)'
+    component.inputs.SIGNAL_IN = 'abc123def'
+    const result = processRegExTick(component)
+
+    expect(result.SIGNAL_OUT).toBe('123')
+  })
+
+  it('should handle maxOutputLength = -1 (no truncation)', () => {
+    component.settings.maxOutputLength = -1
+    component.inputs.SIGNAL_IN = '12345678901234567890'
+    const result = processRegExTick(component)
+
+    expect(result.SIGNAL_OUT).toBe('match')
+  })
+
+  it('should handle match.groups undefined (no named capture)', () => {
+    component.settings.useCaptureGroup = true
+    component.settings.expression = '(\\d+)' // no named group
+    component.inputs.SIGNAL_IN = 'abc123def'
+    const result = processRegExTick(component)
+
+    expect(result.SIGNAL_OUT).toBe('no_match')
+  })
+
+  it('should output falseOutput when capture group is empty and outputEmptyCaptureGroup is false', () => {
+    component.settings.useCaptureGroup = true
+    component.settings.outputEmptyCaptureGroup = false
+    component.settings.expression = '(?<digit>\\d*)'
+    component.inputs.SIGNAL_IN = 'abc'
+    const result = processRegExTick(component)
+
+    expect(result.SIGNAL_OUT).toBe('no_match')
+  })
+
+  it('should output empty capture group when outputEmptyCaptureGroup is true', () => {
+    component.settings.useCaptureGroup = true
+    component.settings.outputEmptyCaptureGroup = true
+    component.settings.expression = '(?<digit>\\d*)'
+    component.inputs.SIGNAL_IN = 'abc'
+    const result = processRegExTick(component)
+
+    expect(result.SIGNAL_OUT).toBe('')
+  })
+
+  it('should output falseOutput when no capture groups are found', () => {
+    component.settings.useCaptureGroup = true
+    component.settings.expression = '\\d+'
+    component.inputs.SIGNAL_IN = '123'
+    const result = processRegExTick(component)
+
+    expect(result.SIGNAL_OUT).toBe('no_match')
+  })
+
+  it('should output last value if signalIn is undefined and continuousOutput is true', () => {
+    component.inputs = {}
+    component.settings.continuousOutput = true
+    component.value = 'last_value'
+    const result = processRegExTick(component)
+
+    expect(result.SIGNAL_OUT).toBe('last_value')
+  })
+
+  it('should output falseOutput if signalIn is undefined and continuousOutput is false', () => {
+    component.inputs = {}
+    component.settings.continuousOutput = false
+    component.value = 'should_not_return'
+    const result = processRegExTick(component)
+
+    expect(result.SIGNAL_OUT).toBe('no_match')
+  })
+
+  it('should not truncate output if maxOutputLength is -1', () => {
+    component.settings.maxOutputLength = -1
+    component.inputs.SIGNAL_IN = '12345'
+    const result = processRegExTick(component)
+
+    expect(result.SIGNAL_OUT).toBe('match')
+  })
+
+  it('should not truncate long output if maxOutputLength is -1', () => {
+    component.settings.maxOutputLength = -1
+    component.settings.output = 'very long output string that should not be truncated'
+    component.inputs.SIGNAL_IN = '12345'
+    const result = processRegExTick(component)
+
+    expect(result.SIGNAL_OUT).toBe('very long output string that should not be truncated')
+  })
 })
